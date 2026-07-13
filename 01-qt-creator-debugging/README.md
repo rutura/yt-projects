@@ -429,10 +429,6 @@ Either way, once exception breaking is enabled:
    exception came from, which is precisely why exception breakpoints
    matter once you're debugging a codebase you didn't write from
    scratch.
-4. In `nested_rethrow_demo()`, set a breakpoint on the `throw;` (bare
-   rethrow) line and step through it (F10/F11) to watch the Stack view
-   during the *second* unwind, as the exception propagates from the
-   inner `catch` to the outer one.
 
 **What to notice:** By default, a debugger only stops you at breakpoints
 you've explicitly set, or when the program crashes — not at every

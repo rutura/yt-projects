@@ -36,10 +36,6 @@
 //     site. Notice how much less you know about where the exception
 //     actually came from -- this is exactly why exception breakpoints
 //     exist for bugs in bigger codebases.
-//   * In nested_rethrow_demo(), set a breakpoint on the `throw;` (bare
-//     rethrow) line and step through with F10/F11 to watch the Stack
-//     view during the second unwind, as the exception propagates from
-//     the inner catch to the outer one.
 // ---------------------------------------------------------------------------
 
 namespace {
@@ -62,27 +58,11 @@ void handled_exception_demo() {
     }
 }
 
-void nested_rethrow_demo() {
-    try {
-        try {
-            throw std::runtime_error("inner failure");
-        } catch (const std::runtime_error& inner) {
-            std::println("Inner catch saw: {}", inner.what());
-            throw; // rethrow: watch the Stack view during the second unwind
-        }
-    } catch (const std::exception& outer) {
-        std::println("Outer catch saw: {}", outer.what());
-    }
-}
-
 } // namespace
 
 void scenarios::run_exceptions() {
     std::println("-- handled exception demo --");
     handled_exception_demo();
-
-    std::println("-- nested catch/rethrow demo --");
-    nested_rethrow_demo();
 
     std::println("(Uncaught-exception crash demo is intentionally not run");
     std::println(" automatically. See README.md Scenario 6 for how to");
