@@ -45,7 +45,8 @@ void scenarios::run_containers_stl() {
         {"alice", 100}, {"bob", 200}, {"carol", 300}
     };
 
-    std::optional<int> maybe_missing = 42; // <-- breakpoint here, inspect all four containers
+    // <-- breakpoint here, inspect all four containers
+    std::optional<int> maybe_missing = 42;
 
     std::println("scores has {} entries", scores.size());
     std::println("name_to_id has {} entries", name_to_id.size());
@@ -53,7 +54,8 @@ void scenarios::run_containers_stl() {
     std::println("maybe_missing = {}", maybe_missing.has_value() ? "has value" : "empty");
 
     maybe_missing.reset(); // <-- step here, re-inspect maybe_missing: now "empty"
-    std::println("maybe_missing after reset = {}", maybe_missing.has_value() ? "has value" : "empty");
+    std::println("maybe_missing after reset = {}",
+                  maybe_missing.has_value() ? "has value" : "empty");
 
     // C++23-flavored ranges pipeline: filter + transform, lazily evaluated.
     auto high_scores = scores

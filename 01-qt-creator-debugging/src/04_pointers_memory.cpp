@@ -65,7 +65,8 @@ void buffer_overrun_demo() {
 
 void smart_pointer_demo() {
     std::unique_ptr<int> owner = std::make_unique<int>(123);
-    std::println("owner points to {}", *owner); // <-- breakpoint: inspect `owner` in Locals
+    // <-- breakpoint: inspect `owner` in Locals
+    std::println("owner points to {}", *owner);
 
     int* raw = owner.get();
     std::println("raw alias = {}", *raw);

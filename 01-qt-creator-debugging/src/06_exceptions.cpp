@@ -28,7 +28,8 @@ namespace {
 
 double divide(double numerator, double denominator) {
     if (denominator == 0.0) {
-        throw std::invalid_argument("division by zero in divide()"); // <-- exception breakpoint stops here
+        // <-- exception breakpoint stops here
+        throw std::invalid_argument("division by zero in divide()");
     }
     return numerator / denominator;
 }
@@ -37,7 +38,8 @@ void handled_exception_demo() {
     try {
         const double result = divide(10.0, 0.0);
         std::println("result = {}", result); // never reached
-    } catch (const std::invalid_argument& e) { // <-- normal breakpoint here to inspect `e`
+    } catch (const std::invalid_argument& e) {
+        // <-- normal breakpoint here to inspect `e`
         std::println("Caught expected exception: {}", e.what());
     }
 }
@@ -64,6 +66,7 @@ void scenarios::run_exceptions() {
     std::println("-- nested catch/rethrow demo --");
     nested_rethrow_demo();
 
-    std::println("(Uncaught-exception crash demo is intentionally not run automatically.");
-    std::println(" See README.md Scenario 6 for how to trigger it safely under the debugger.)");
+    std::println("(Uncaught-exception crash demo is intentionally not run");
+    std::println(" automatically. See README.md Scenario 6 for how to");
+    std::println(" trigger it safely under the debugger.)");
 }

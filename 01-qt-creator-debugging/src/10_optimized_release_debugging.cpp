@@ -42,7 +42,8 @@ long long inefficient_sum(int n) {
     for (int i = 0; i < n; ++i) {
         long long subtotal = 0;
         for (int j = 0; j <= i; ++j) {
-            subtotal += j; // <-- set a breakpoint here in BOTH builds and compare hit behavior
+            // <-- set a breakpoint here in BOTH builds and compare hit behavior
+            subtotal += j;
         }
         total += subtotal;
     }
@@ -54,7 +55,8 @@ long long inefficient_sum(int n) {
 void scenarios::run_optimized_release_debugging() {
     std::println("Running inefficient_sum(2000)... compare this scenario between a");
     std::println("Debug build and a RelWithDebInfo build of this same project (see");
-    std::println("README.md Scenario 10 for how to set up the second build in Qt Creator).");
+    std::println("README.md Scenario 10 for how to set up the second build in Qt");
+    std::println("Creator).");
 
     const long long result = inefficient_sum(2000);
     std::println("inefficient_sum(2000) = {}", result);

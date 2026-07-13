@@ -19,11 +19,18 @@ place.
 - **Qt Creator** 12 or newer (Qt Creator ships its own CMake integration and
   debugger front end; you do not need the Qt framework itself for this
   project, only the IDE).
-- A C++23-capable compiler, already configured as a **Kit** in Qt Creator:
-  - Windows: MSVC 2022 (or newer) via the "Desktop Qt ... MSVC" kit, or
-    MinGW-w64 GCC 13+.
-  - Linux: GCC 13+ or Clang 16+.
-  - macOS: a recent Xcode/Clang toolchain.
+- A C++23-capable compiler, already configured as a **Kit** in Qt Creator.
+  This project uses `<print>`/`<format>`, which needs a genuinely recent
+  standard library, not just a compiler that claims `-std=c++23`:
+  - Windows (MSVC): MSVC 2022 17.5+ (Qt Creator's "Desktop Qt ... MSVC" kit).
+  - Windows (MinGW/LLVM-MinGW): a **GCC 14+** or **Clang 17+** toolchain
+    whose bundled libstdc++/libc++ ships `<print>`. Qt's own
+    `llvm-mingw_64` kit (Clang 17, e.g. under `Qt\Tools\llvm-mingw*_64`)
+    works. Qt's older bundled `mingw*_64` kit (GCC 13) does **not** — it
+    predates `<print>`/`<format>` support entirely and will fail to
+    compile; pick the LLVM-MinGW or an MSVC kit instead.
+  - Linux: GCC 14+ or Clang 17+.
+  - macOS: a recent Xcode/Clang toolchain with `<print>` support.
 - A matching debugger backend, which Qt Creator auto-detects per kit:
   - MSVC kits use **CDB** (Windows Debugging Tools). If Qt Creator warns
     that CDB isn't installed, install "Debugging Tools for Windows" via the
@@ -50,9 +57,20 @@ No third-party libraries are used — only the standard library and
    everything compiles.
 6. Set the run target to `qt_creator_debugging_lab` (it's the only target
    for now — see Scenario 10 for adding a second build configuration).
+7. **Required: enable "Run in terminal".** This program reads your
+   scenario choice from stdin via `std::cin`. Qt Creator's default
+   **Application Output** pane does *not* forward keyboard input to the
+   process, so left on defaults the program will look "stuck" (or spin
+   forever reprinting the menu, since stdin looks closed from its point
+   of view). Fix this once per run/debug configuration:
+   - Open **Projects** mode (left sidebar) → your kit → **Run**.
+   - Under **Run Configuration**, check **Run in terminal**.
+   - Do this for both the Run and Debug configurations if Qt Creator
+     lists them separately.
 
 The program is an interactive console menu. When you **Run** it (Ctrl+R) or
-**Debug** it (F5), a terminal/Application Output pane opens showing:
+**Debug** it (F5) with "Run in terminal" enabled, a real console window
+opens showing:
 
 ```
 ==================================================================
@@ -70,10 +88,9 @@ Type a number and press Enter to run that scenario. **Set your breakpoints
 in the relevant source file first**, then start debugging and type the
 scenario's number at the prompt.
 
-> **Tip:** On Windows with an MSVC kit, make sure Qt Creator's Debugger
-> settings run the app in an environment where you can type into stdin —
-> the default "Application Output" pane supports input. If you don't see a
-> prompt, check **Projects > Run > Run in terminal**.
+> If you forget to enable "Run in terminal" and the program appears to
+> hang or spam "Please enter a number." / "Input closed." repeatedly, stop
+> it (Shift+F5), enable "Run in terminal" as above, and start again.
 
 ---
 
@@ -300,9 +317,9 @@ are always correct.
    `sum_all<int>`, not a generic "sum_all". Continue, and step in again
    from the `sum_all(doubles)` call — now the stack shows `sum_all<double>`.
    Same source line, two different compiled functions.
-3. Set a breakpoint inside `Box<T>::describe()` (uses C++23 "deducing
-   this"). Inspect the `self` parameter in Locals — it stands in for
-   `this`, deduced per call site.
+3. Set a breakpoint inside `Box<T>::describe()`. Inspect `this` in
+   Locals — expand it to see the pointee (the `value` member) the same
+   way you would for any other pointer.
 4. Set a breakpoint inside `classify()` on the runtime branch (the `return
    n < 0 ? -1 : (n == 0 ? 0 : 1);` line inside the `else`). Notice you can
    never break inside the `if consteval` branch above it with a live

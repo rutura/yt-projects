@@ -31,14 +31,21 @@ struct Player {
 };
 
 std::string status_line(const Player& p, bool is_critical) {
-    return std::format("{} @ ({:.1f},{:.1f}) hp={} mana={} critical={}",
-                        p.name, p.position_x, p.position_y, p.health, p.mana, is_critical);
+    return std::format(
+        "{} @ ({:.1f},{:.1f}) hp={} mana={} critical={}",
+        p.name, p.position_x, p.position_y, p.health, p.mana, is_critical);
 }
 
 } // namespace
 
 void scenarios::run_variables_watches() {
-    Player player{.name = "Aria", .health = 42, .mana = 15, .position_x = 3.5f, .position_y = -1.25f};
+    Player player{
+        .name = "Aria",
+        .health = 42,
+        .mana = 15,
+        .position_x = 3.5f,
+        .position_y = -1.25f,
+    };
 
     std::vector<std::string> inventory{"sword", "shield", "potion", "map"};
 

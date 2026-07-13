@@ -15,10 +15,9 @@
 //     and check the Locals view / the function signature shown in the
 //     Stack view -- it will display the concrete instantiated type
 //     (e.g. `sum_all<int>`), not the generic template.
-//   * Set a breakpoint inside Box<T>::describe() (a member function that
-//     uses C++23's "deducing this"). Inspect `self` in Locals -- it plays
-//     the role of both const and non-const `this` depending on how it's
-//     called.
+//   * Set a breakpoint inside Box<T>::describe(). Inspect `this` in Locals
+//     -- expand it to see the pointee (the `value` member) the same way
+//     you would for any other pointer.
 //   * Step through `classify()` which uses `if consteval`: notice the
 //     debugger only ever shows you the runtime branch, because the
 //     compile-time branch (if selected) wouldn't exist as debuggable code
@@ -43,11 +42,9 @@ template <typename T>
 struct Box {
     T value;
 
-    // C++23 "deducing this": one function body serves both const and
-    // non-const call sites via the deduced `self` parameter.
-    template <typename Self>
-    std::string describe(this Self&& self) {
-        return std::format("Box holds: {}", self.value); // <-- breakpoint here, inspect `self`
+    std::string describe() const {
+        // <-- breakpoint here, inspect `this`
+        return std::format("Box holds: {}", this->value);
     }
 };
 

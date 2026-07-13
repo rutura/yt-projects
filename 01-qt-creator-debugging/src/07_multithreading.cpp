@@ -67,7 +67,8 @@ void race_condition_demo() {
     }
 
     const int expected = kThreadCount * kIncrementsPerThread;
-    std::println("unsafe_counter = {} (expected {}) -- mismatch shows the race", unsafe_counter, expected);
+    std::println("unsafe_counter = {} (expected {}) -- mismatch shows the race",
+                  unsafe_counter, expected);
 }
 
 void synchronized_demo() {
@@ -94,7 +95,8 @@ void synchronized_demo() {
 } // namespace
 
 void scenarios::run_multithreading() {
-    std::println("-- unsynchronized race demo (result is non-deterministic on purpose) --");
+    std::println("-- unsynchronized race demo --");
+    std::println("(result is non-deterministic, on purpose)");
     race_condition_demo();
 
     std::println("-- synchronized demo (atomic + mutex, always correct) --");
