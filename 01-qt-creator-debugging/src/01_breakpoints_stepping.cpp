@@ -1,5 +1,5 @@
 #include <print>
-#include <string>
+#include <string_view>
 
 #include "scenarios.h"
 
@@ -18,7 +18,7 @@
 
 namespace {
 
-double base_price(const std::string& item) {
+double base_price(std::string_view item) {
     if (item == "widget") return 9.99;
     if (item == "gadget") return 24.50;
     return 4.99; // fallback item, deliberately vague on purpose
@@ -33,7 +33,7 @@ double add_tax(double price, double tax_rate) {
     return price + (price * tax_rate);
 }
 
-double compute_receipt(const std::string& item, double percent_off, double tax_rate) {
+double compute_receipt(std::string_view item, double percent_off, double tax_rate) {
     int total_steps = 0; // step through and watch this increment
 
     double price = base_price(item);

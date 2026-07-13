@@ -1,6 +1,5 @@
 #include <print>
 #include <stdexcept>
-#include <string>
 
 #include "scenarios.h"
 

@@ -1,8 +1,9 @@
+#include <array>
 #include <cstdlib>
 #include <iostream>
 #include <limits>
 #include <print>
-#include <string>
+#include <string_view>
 
 #include "scenarios.h"
 
@@ -10,12 +11,12 @@ namespace {
 
 struct MenuItem {
     int number;
-    const char* title;
-    const char* file;
+    std::string_view title;
+    std::string_view file;
     void (*run)();
 };
 
-const MenuItem kMenu[] = {
+constexpr std::array<MenuItem, 10> kMenu{{
     {
         1,
         "Breakpoints & stepping (step in/over/out, run to line)",
@@ -76,7 +77,7 @@ const MenuItem kMenu[] = {
         "10_optimized_release_debugging.cpp",
         scenarios::run_optimized_release_debugging,
     },
-};
+}};
 
 void print_menu() {
     std::println("==================================================================");

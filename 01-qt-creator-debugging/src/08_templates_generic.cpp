@@ -44,7 +44,7 @@ struct Box {
 
     std::string describe() const {
         // <-- breakpoint here, inspect `this`
-        return std::format("Box holds: {}", this->value);
+        return std::format("Box holds: {}", value);
     }
 };
 

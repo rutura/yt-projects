@@ -292,7 +292,7 @@ eventually handled (or not handled at all).
    real, unsynchronized data race (multiple threads doing a
    non-atomic read-modify-write on the same `int` at once).
 5. Compare against `increment_safe()`: set a breakpoint on the
-   `std::lock_guard<std::mutex> lock(counter_mutex);` line. Now only one
+   `std::scoped_lock lock(counter_mutex);` line. Now only one
    thread at a time can be inside the critical section — other threads
    waiting on the mutex show a different (blocked) state if you inspect
    them in the Threads pane while stopped.

@@ -51,7 +51,7 @@ void increment_atomic() {
 
 void increment_safe() {
     for (int i = 0; i < kIncrementsPerThread; ++i) {
-        std::lock_guard<std::mutex> lock(counter_mutex); // <-- breakpoint here
+        std::scoped_lock lock(counter_mutex); // <-- breakpoint here
         ++mutex_counter;
     }
 }
