@@ -223,20 +223,34 @@ comfortable choosing between these three.
    Expressions view, so it stays visible even if it later scrolls out of
    Locals. (Alternative: double-click empty space in the Expressions
    view and type `inventory.size()` directly.)
-5. The same way, add an expression evaluator for `player.health < 30`.
-   Step forward (F10) and watch it stay live-evaluated as a boolean.
+5. The same way, add an expression evaluator for `player.health`. Step
+   forward (F10) and watch it stay live-evaluated as you go.
+
+   > Stick to expressions like a bare variable, a member access
+   > (`player.health`), or a function call (`inventory.size()`) — these
+   > evaluate reliably on every debugger backend (GDB, LLDB, CDB).
+   > Comparison/boolean expressions typed into the Expressions view (for
+   > example `player.health < 30`) are known to be unreliable
+   > specifically under LLDB, and can show `<no such value>` even though
+   > every piece of the expression is genuinely in scope. That's a
+   > limitation of the debugger backend's expression parser, not a bug
+   > in your program — if you need to check a condition like that, just
+   > step to the line that computes it (see step 6) and read the
+   > resulting variable in Locals instead.
 6. Change a value at runtime: in the Locals view, click directly on the
    **value** of `health` (not its name), type `5`, and press Enter. Then
    step forward (F10) past the second
-   `const bool is_critical_now = player.health < 30;` line and watch it
-   actually evaluate to `true` — because you changed the underlying data
-   yourself, live, without editing or recompiling any code.
+   `const bool is_critical_now = player.health < 30;` line and check
+   `is_critical_now` in Locals — it now evaluates to `true`, because you
+   changed the underlying data yourself, live, without editing or
+   recompiling any code.
 
 **What to notice:** Locals shows everything currently in scope
 automatically. Expressions lets you pin specific values (including
-arbitrary expressions, not just plain variables) so you can track them
-across the whole debug session, even as you step through unrelated code.
-Editing a value directly in Locals is a fast way to test "what if"
+member accesses and function calls, not just plain variables) so you can
+track them across the whole debug session, even as you step through
+unrelated code. Editing a value directly in Locals is a fast way to test
+"what if"
 branches without touching source code at all.
 
 ---

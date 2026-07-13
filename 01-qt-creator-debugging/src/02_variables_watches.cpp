@@ -23,13 +23,22 @@
 //     Expressions view so you can keep an eye on it even after it
 //     scrolls out of Locals. Alternatively, double-click empty space in
 //     the Expressions view and type `inventory.size()` directly.
-//   * Add another expression evaluator for `player.health < 30` to watch
-//     it evaluate live, as a boolean, while you step.
+//   * Add another expression evaluator for `player.health` (a plain
+//     member access, not a comparison) to watch it live in the
+//     Expressions view. Stick to expressions like this -- a bare
+//     variable or member access, or a function call like
+//     `inventory.size()` -- since those evaluate reliably on every
+//     debugger backend. Comparison/boolean expressions (e.g.
+//     `player.health < 30`) are known to be unreliable specifically with
+//     LLDB and can show "<no such value>" even though every piece of
+//     the expression is genuinely in scope; that's a debugger-backend
+//     limitation, not a bug in your program.
 //   * Change `player.health` at runtime: in the Locals view, click
 //     directly on the VALUE of `health` (not the name), type `5`, and
 //     press Enter. Then step forward (F10) past the second
-//     `const bool is_critical_now = ...` line and watch it actually
-//     evaluate to true, because you changed the underlying data.
+//     `const bool is_critical_now = ...` line and check `is_critical_now`
+//     in Locals -- it now evaluates to true, because you changed the
+//     underlying data.
 // ---------------------------------------------------------------------------
 
 namespace {
