@@ -197,10 +197,7 @@ that scenario builds on these same five actions.
    `add_tax()`. Once inside it, press **Shift+F11 (Step Out)** to run the
    rest of `add_tax()` and pop back up to `compute_receipt()`, now with
    `final_price` populated.
-5. Right-click the `std::println("Final price (cents): {}", total);`
-   line near the bottom of `run_breakpoints_stepping()` and choose
-   **Run to Line** (or place your cursor there and press Ctrl+F10) to
-   jump straight to it.
+
 
 **What to notice:** Step Over treats a called function as a black box;
 Step Into follows execution inside it; Step Out finishes the current
