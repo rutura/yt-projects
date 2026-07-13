@@ -149,8 +149,9 @@ muscle-memory skill in the whole lab.
    Expressions**.
 3. Expand `player` in Locals — it's a struct; you'll see each member
    (`name`, `health`, `mana`, `position_x`, `position_y`).
-4. Right-click `inventory` → **Add to Watch Window** — or just type
-   `inventory.size()` in the Expressions box.
+4. Right-click `inventory` → **Add Expression Evaluator for "inventory"**
+   (this option is named **Add to Watch Window** in older Qt Creator
+   versions) — or just type `inventory.size()` in the Expressions box.
 5. Add a watch expression: `player.health < 30`. Step forward (F10) and
    watch it stay evaluated live as a boolean.
 6. Right-click `player.health` in Locals → **Change Value**, set it to `5`,

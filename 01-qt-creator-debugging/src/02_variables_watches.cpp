@@ -12,7 +12,8 @@
 //   * Set a breakpoint on the `std::println("checkpoint A");` line.
 //   * Open View > Debugger Windows > Locals and Expressions.
 //   * Watch `player` expand in the Locals view (struct members).
-//   * Right-click `inventory` -> "Add to Watch Window" or type
+//   * Right-click `inventory` -> "Add Expression Evaluator for 'inventory'"
+//     (older Qt Creator versions call this "Add to Watch Window") or type
 //     `inventory.size()` directly into the Expressions box.
 //   * Add a watch expression `player.health < 30` to see it evaluate
 //     live as a boolean while you step.
