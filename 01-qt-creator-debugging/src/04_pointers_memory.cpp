@@ -32,13 +32,32 @@
 //     `std::println("buffer sum = {}", raw_sum);` line. Once stopped,
 //     right-click `buffer` in the Locals view and choose
 //     "Open Memory Editor" (or one of its "Open Memory Editor at ..."
-//     variants) to see the array's raw bytes as hex and ASCII side by
-//     side, instead of as individual `int` values.
+//     variants). A new window titled something like
+//     'Memory at Object's Address "buffer" (0x...)' opens. Making sense
+//     of it:
+//     - The leftmost column (e.g. "0000:00ac:585c:fb50") is just the
+//       memory address of the start of that row -- it climbs by 0x10
+//       (16 bytes) per row, since each row shows 16 bytes.
+//     - The middle block is 16 individual bytes per row, in hex, two
+//       hex digits each (00-ff).
+//     - The rightmost block is the exact same 16 bytes, but shown as
+//       ASCII -- most of them render as "." because raw int bytes
+//       usually aren't printable characters.
+//     - `buffer` is `int[10]`, and each `int` is 4 bytes, stored
+//       little-endian (least-significant byte first). So the 4 bytes
+//       `04 00 00 00` are the int value 4, and `51 00 00 00` are the
+//       int value 0x51 = 81 -- these are buffer[2] and buffer[9],
+//       matching `i * i` for i=2 and i=9. The Memory Editor usually
+//       color-highlights the address range belonging to `buffer` (here,
+//       10 groups of 4 bytes) so you can see exactly where the array
+//       starts and ends versus the unrelated stack bytes around it.
 //     Optional deeper exercise: uncomment the line
 //     `// buffer[10] = 0xFF;` below, rebuild, set the breakpoint one line
-//     later, and reopen the Memory Editor on `buffer` to watch the
-//     out-of-bounds write land one slot past the array -- a real,
-//     visible buffer overrun.
+//     later, and reopen the Memory Editor on `buffer`. Compare the same
+//     highlighted region: you'll now see an extra `ff 00 00 00` sitting
+//     immediately after the highlighted range for buffer[9] -- a write
+//     that landed one slot past the array, in memory `buffer` doesn't
+//     own. That's the out-of-bounds write made visible, byte for byte.
 //   * Set a breakpoint inside smart_pointer_demo() and inspect `owner`
 //     (a std::unique_ptr<int>) in Locals: Qt Creator's pretty-printer
 //     shows you the pointee's value (123) directly, instead of the raw

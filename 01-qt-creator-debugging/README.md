@@ -316,12 +316,32 @@ comfortable navigating many stacked frames instead of just one or two.
    `std::println("buffer sum = {}", raw_sum);` line. Step to it, then
    right-click `buffer` in Locals and choose **Open Memory Editor** (you
    may see a submenu with a couple of variants — any of them work here).
-   You'll see the array's raw bytes as hex and ASCII side by side.
+   A new window opens, titled something like
+   `Memory at Object's Address "buffer" (0x...)`. Here's how to read it:
+   - The leftmost column (something like `0000:00ac:585c:fb50`) is just
+     the memory address where that row starts. It climbs by `0x10`
+     (16 bytes) per row, since each row displays 16 bytes.
+   - The middle block is those same 16 bytes, one at a time, in hex
+     (two digits each, `00`–`ff`).
+   - The rightmost block is the identical 16 bytes shown as ASCII text.
+     Most will render as `.`, because raw `int` bytes usually aren't
+     printable characters.
+   - `buffer` is `int[10]`, and each `int` occupies 4 bytes, stored
+     **little-endian** (least-significant byte first). So the 4 bytes
+     `04 00 00 00` are the value `4`, and `51 00 00 00` are `0x51 = 81`
+     in decimal — those are `buffer[2]` and `buffer[9]`, matching
+     `i * i` for `i = 2` and `i = 9`. The Memory Editor typically
+     color-highlights the exact address range belonging to `buffer` (10
+     groups of 4 bytes here), so you can see precisely where the array
+     starts and ends versus the unrelated stack bytes surrounding it.
    - Optional deeper exercise: uncomment the line
      `// buffer[10] = 0xFF;` in the source, rebuild, move your breakpoint
-     one line later, and reopen the Memory Editor on `buffer` to watch
-     the out-of-bounds write land one slot past the array — a real,
-     visible off-by-one buffer overrun.
+     one line later, and reopen the Memory Editor on `buffer`. Compare
+     the same highlighted region: you'll now see an extra
+     `ff 00 00 00` sitting immediately after the bytes for `buffer[9]` —
+     a write that landed one slot past the array, in memory `buffer`
+     doesn't own. That's the off-by-one overrun made visible, byte for
+     byte.
 4. Set a breakpoint on `std::println("owner points to {}", *owner);`
    inside `smart_pointer_demo()`. Inspect `owner` (a
    `std::unique_ptr<int>`) in Locals — Qt Creator's pretty-printer shows
