@@ -386,12 +386,6 @@ readable views. This is why modern C++ containers are comfortable to
 debug — you almost never need to manually decode a vector's internal
 pointer/size/capacity triplet by hand.
 
-> **Note on optimized builds:** the official Qt Creator docs point out
-> that optimization can reorder instructions or remove some local
-> variables entirely, which can make Locals/Expressions show unexpected
-> or missing data. This scenario's Debug build won't show that — but
-> Scenario 10 deliberately walks you into it.
-
 ---
 
 ### Scenario 6 — Exceptions & breaking on the throw site
