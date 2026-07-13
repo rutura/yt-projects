@@ -4,23 +4,42 @@
 #include "scenarios.h"
 
 // ---------------------------------------------------------------------------
-// Scenario 06 - Exceptions & the exception breakpoint
+// Scenario 06 - Exceptions & breaking on the throw site
+//
+// Note: this scenario's setup step depends on which debugger backend your
+// kit uses. If your kit is MSVC (visible as "MSVC 2022" in your kit's
+// name), Qt Creator debugs it with CDB, and exception breaking is a
+// global preference rather than a per-breakpoint option:
+//   * Go to Edit > Preferences > Debugger > CDB.
+//   * In the "Break On" group, enable the option for C++ exceptions
+//     (also enable "Add Exceptions to Issues View" if you want a written
+//     record in the Issues pane).
+// If your kit uses GDB or LLDB (typical for MinGW/Linux/macOS kits)
+// instead, add a breakpoint whose type is specifically an exception
+// breakpoint from the Breakpoints view's "Add Breakpoint" dialog instead
+// of the steps above.
 //
 // What to try in Qt Creator:
-//   * Before running, open Debug > Breakpoints (or the Breakpoints view)
-//     and add a "C++ Exception" breakpoint (right-click in the Breakpoints
-//     pane -> Add Breakpoint... -> Exception). This pauses execution the
-//     instant *any* C++ exception is thrown, before any catch/unwind.
-//   * Run this scenario. With the exception breakpoint set, you'll land
-//     directly inside divide() at the `throw std::invalid_argument(...)`
-//     line -- not at the catch block -- so you see the true throw site.
-//   * Remove the exception breakpoint and re-run: now execution just skips
-//     straight to the `catch` block, and the original throw location is
-//     lost from view (only the Stack view's unwind history hints at it).
-//   * Inspect the caught exception object `e` in Locals inside the catch
-//     block, expanding it to see `what()`'s stored message.
-//   * Try the uncaught_exception_demo() path (see README) to see how Qt
-//     Creator stops the whole program on an unhandled exception.
+//   * With exception breaking enabled as above, start debugging (F5) and
+//     run this scenario. Execution stops the instant
+//     `throw std::invalid_argument(...)` runs inside divide() -- not at
+//     the `catch` block -- so you see exactly where and why it was
+//     thrown, with the full call stack back to where divide() was called
+//     from.
+//   * Continue (F5). Now set a normal breakpoint inside the `catch`
+//     block (the `std::println("Caught expected exception: {}", ...)`
+//     line) and inspect the caught object `e` in the Locals view --
+//     expand it to see the message that `.what()` returns stored inside.
+//   * Disable the CDB "Break On" C++ exceptions option (or remove the
+//     GDB/LLDB exception breakpoint) and re-run: this time execution
+//     jumps straight to the `catch` block with no pause at the throw
+//     site. Notice how much less you know about where the exception
+//     actually came from -- this is exactly why exception breakpoints
+//     exist for bugs in bigger codebases.
+//   * In nested_rethrow_demo(), set a breakpoint on the `throw;` (bare
+//     rethrow) line and step through with F10/F11 to watch the Stack
+//     view during the second unwind, as the exception propagates from
+//     the inner catch to the outer one.
 // ---------------------------------------------------------------------------
 
 namespace {

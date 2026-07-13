@@ -7,21 +7,28 @@
 // Scenario 04 - Pointers, memory view & undefined behavior
 //
 // What to try in Qt Creator:
-//   * Set a breakpoint at the start of dangling_pointer_demo(). Step through
-//     with F10 and watch `leaked_ptr` in Locals: after make_dangling()
-//     returns, the pointee is destroyed but the pointer still holds the
-//     (now invalid) address. Try dereferencing it in the Expressions view
-//     to see how the debugger reacts to reading freed memory.
-//   * Set a breakpoint at `buffer[10] = 0xFF;` inside buffer_overrun_demo().
-//     Open View > Debugger Windows > Memory > "Open Memory Editor" on
-//     `buffer` and watch the out-of-bounds write land in adjacent stack
-//     memory. This is a classic case where the program "seems to work"
-//     but corrupts something nearby.
-//   * Right-click a pointer variable (e.g. `raw`) in Locals and choose
-//     "Open Memory Editor" to see the raw bytes it points to, and toggle
-//     between hex/ASCII.
-//   * Inspect `owner` (a unique_ptr) in Locals: Qt Creator's pretty-printer
-//     shows the pointee directly instead of raw internals.
+//   * Set a breakpoint at the start of dangling_pointer_demo() (the
+//     `int* leaked_ptr = make_dangling();` line). Step over it with F10
+//     and look at `leaked_ptr` in the Locals view: after make_dangling()
+//     has already returned, the `int` it pointed to no longer exists, but
+//     `leaked_ptr` still holds that (now-invalid) address. This is a
+//     "dangling pointer" -- notice the debugger happily shows you the
+//     address; it can't tell you the memory behind it is no longer valid.
+//   * Set a breakpoint inside buffer_overrun_demo() on the
+//     `std::println("buffer sum = {}", raw_sum);` line. Once stopped,
+//     right-click `buffer` in the Locals view and choose
+//     "Open Memory Editor" (or one of its "Open Memory Editor at ..."
+//     variants) to see the array's raw bytes as hex and ASCII side by
+//     side, instead of as individual `int` values.
+//     Optional deeper exercise: uncomment the line
+//     `// buffer[10] = 0xFF;` below, rebuild, set the breakpoint one line
+//     later, and reopen the Memory Editor on `buffer` to watch the
+//     out-of-bounds write land one slot past the array -- a real,
+//     visible buffer overrun.
+//   * Set a breakpoint inside smart_pointer_demo() and inspect `owner`
+//     (a std::unique_ptr<int>) in Locals: Qt Creator's pretty-printer
+//     shows you the pointee's value (123) directly, instead of the raw
+//     internal pointer bytes you'd see for a hand-rolled smart pointer.
 // ---------------------------------------------------------------------------
 
 namespace {

@@ -7,32 +7,35 @@
 //
 // Every other scenario runs from the same Debug build. This one is
 // designed to be compared across TWO separate builds of this project:
-//   1. A normal Debug build (-DCMAKE_BUILD_TYPE=Debug), unoptimized, full
+//   1. A normal Debug build (CMAKE_BUILD_TYPE=Debug), unoptimized, full
 //      debug info -- how you've built everything else so far.
-//   2. A RelWithDebInfo build (-DCMAKE_BUILD_TYPE=RelWithDebInfo),
-//      optimizations on but debug info still generated. In Qt Creator,
-//      add a second "Build" configuration for this project using that
-//      build type (or a second Kit configured with it), so you can run
-//      and debug both side by side.
+//   2. A RelWithDebInfo build (CMAKE_BUILD_TYPE=RelWithDebInfo),
+//      optimizations on but debug info still generated.
 //
-// See README.md "Scenario 10" for the exact steps to set up the second
-// build configuration in Qt Creator.
+// See README.md "Scenario 10" for the exact steps to add and switch to a
+// second build configuration in Qt Creator's Projects mode.
 //
 // What to try in Qt Creator:
-//   * In the Debug build, step through inefficient_sum() line by line
-//     with F10: every loop iteration and the `subtotal` temporary are
-//     visible exactly as written.
-//   * In the RelWithDebInfo build, set the SAME breakpoint on the
-//     `subtotal +=` line. You'll likely see it hit far fewer times than
-//     expected, or the debugger may report a variable as "<optimized
-//     out>" in Locals -- the compiler inlined/unrolled the loop or kept
-//     `subtotal` purely in a register with no stable memory address.
-//     This is one of the most common "wait, why doesn't the debugger
-//     match my code?" moments students hit in real projects.
-//   * Compare the Disassembly view (Debug > Windows > Disassembly, or
-//     right-click in the editor -> "Show Disassembly") between the two
-//     builds for the same function to see the instruction count differ
-//     drastically.
+//   * With the Debug build active, set a breakpoint on the
+//     `subtotal += j;` line and step through inefficient_sum() with F10:
+//     every loop iteration and the `subtotal` temporary are visible
+//     exactly as written, updating one step at a time.
+//   * Switch to the RelWithDebInfo build (see README.md "Scenario 10"),
+//     rebuild, and set the SAME breakpoint on the same
+//     `subtotal += j;` line. Step through it again: you'll likely see it
+//     get hit far fewer times than expected, or the Locals view may
+//     report `subtotal` as "<optimized out>" or "not in scope" -- the
+//     compiler inlined or unrolled the loop, or kept `subtotal` purely
+//     in a CPU register with no stable memory location for the debugger
+//     to point at. This is one of the most common "wait, why doesn't
+//     the debugger match my code?" moments you'll hit in real projects
+//     once you start debugging Release builds.
+//   * While stopped, go to Debug > Operate by Instruction (or the
+//     matching button on the debugger toolbar) to switch the editor
+//     into a Disassembler view of the current function's actual machine
+//     code. Do this in both builds and compare: the Debug build's
+//     disassembly closely mirrors your C++ line by line, while the
+//     RelWithDebInfo build's is usually shorter and reordered.
 // ---------------------------------------------------------------------------
 
 namespace {

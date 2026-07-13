@@ -7,24 +7,33 @@
 #include "scenarios.h"
 
 // ---------------------------------------------------------------------------
-// Scenario 07 - Multithreading (Threads view, data races, deadlocks)
+// Scenario 07 - Multithreading (Threads view, data races)
 //
 // What to try in Qt Creator:
-//   * Run race_condition_demo() under the debugger and open View >
-//     Debugger Windows > Threads. While it's running, hit Interrupt (the
-//     pause button); you'll see multiple worker threads listed, each with
-//     its own stack. Click between threads to see each one's independent
-//     call stack and locals.
-//   * Set a breakpoint inside increment_unsafe() and re-run: notice it's
-//     hit repeatedly from *different* thread IDs, and the "unsafe_counter"
-//     value can be inconsistent with how many times you'd expect given the
-//     number of hits, because of the race.
-//   * Compare against increment_safe(), which takes a std::mutex; set a
-//     breakpoint on the `std::lock_guard` line and watch only one thread
-//     be inside the critical section at a time (others block, visible as
-//     a different thread state in the Threads view).
-//   * Try View > Debugger Windows > "Modules" while stopped to see
-//     libstdc++/libc++ and the pthread/Win32 thread libraries loaded.
+//   * Make sure the Threads view is visible: go to View > Views and
+//     check "Threads" if it isn't already.
+//   * Start debugging (F5) and let race_condition_demo() start running.
+//     While it's executing, go to Debug > Interrupt (there is no default
+//     keyboard shortcut for this) to pause it mid-flight. Look at the
+//     Threads view: you'll see multiple worker threads listed, each with
+//     its own thread id. Click between them -- the Stack and Locals
+//     views update to show that specific thread's own call stack and
+//     variables.
+//   * Continue (F5), then set a breakpoint inside increment_unsafe() on
+//     the `++unsafe_counter;` line and run again. Notice the breakpoint
+//     is hit repeatedly from *different* thread ids (shown in the
+//     Threads view / in the breakpoint hit info) -- several threads are
+//     all racing to run this same line at once.
+//   * Look at the program's own printed output at the end:
+//     "unsafe_counter = ... (expected ...) -- mismatch shows the race".
+//     The two numbers essentially never match, because multiple threads
+//     read-modify-wrote `unsafe_counter` at the same time without any
+//     synchronization, and some of those updates were silently lost.
+//   * Compare against increment_safe(), which uses a std::mutex. Set a
+//     breakpoint on the `std::scoped_lock lock(counter_mutex);` line
+//     and run again: only one thread at a time is ever stopped there,
+//     because the others are blocked waiting for the mutex -- you can
+//     confirm this by checking their state in the Threads view.
 // ---------------------------------------------------------------------------
 
 namespace {

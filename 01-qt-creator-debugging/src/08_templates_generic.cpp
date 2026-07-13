@@ -9,19 +9,29 @@
 // Scenario 08 - Templates & generic code (C++23)
 //
 // What to try in Qt Creator:
-//   * Set a breakpoint inside the body of `sum_all`. Because it's a
-//     template, the debugger will only show you the *instantiations*
-//     actually used below (int and double). Step in from each call site
-//     and check the Locals view / the function signature shown in the
-//     Stack view -- it will display the concrete instantiated type
-//     (e.g. `sum_all<int>`), not the generic template.
-//   * Set a breakpoint inside Box<T>::describe(). Inspect `this` in Locals
-//     -- expand it to see the pointee (the `value` member) the same way
-//     you would for any other pointer.
-//   * Step through `classify()` which uses `if consteval`: notice the
-//     debugger only ever shows you the runtime branch, because the
-//     compile-time branch (if selected) wouldn't exist as debuggable code
-//     at all when evaluated at compile time.
+//   * Set a breakpoint inside the body of sum_all(), on the
+//     `total += v;` line. Start debugging (F5) and, when it stops, look
+//     at the Stack view (View > Views > Stack if it's not visible). The
+//     top frame's name won't just say "sum_all" -- it will show the
+//     concrete instantiated type, something like `sum_all<int>`, because
+//     a template only becomes real, compiled code once you use it with a
+//     specific type.
+//   * Continue (F5): the same breakpoint fires again, this time from the
+//     `sum_all(doubles)` call. Check the Stack view again -- now it
+//     shows `sum_all<double>`. Same source line, two genuinely different
+//     compiled functions.
+//   * Set a breakpoint inside Box<T>::describe(), on the
+//     `return std::format(...)` line. When it stops, expand `this` in
+//     the Locals view -- it's a pointer to the current Box object, and
+//     expanding it shows you its `value` member, the same way expanding
+//     any other pointer would.
+//   * Set a breakpoint inside classify(), specifically on the
+//     `return n < 0 ? -1 : (n == 0 ? 0 : 1);` line (the one inside the
+//     `else`). Step through it. You will never be able to stop inside
+//     the `if consteval` branch above it with a live debugger: if that
+//     branch had been the one selected, it would have run entirely
+//     while the program was being compiled, and there is no runtime
+//     code for the debugger to pause on.
 // ---------------------------------------------------------------------------
 
 namespace {

@@ -13,21 +13,29 @@
 // conditional breakpoints are for.
 //
 // What to try in Qt Creator:
-//   * Set a breakpoint on the `int result = value / divisor;` line.
-//   * Right-click the breakpoint (in the editor gutter or the Breakpoints
-//     view) -> "Edit Breakpoint..." and set the condition to `divisor == 0`.
-//     Re-run: the debugger now skips straight to the one iteration that
-//     matters instead of stopping 1000 times.
-//   * Alternatively, set the condition to `i == 733` to jump to the exact
-//     iteration by index.
-//   * Try a *logging* (tracepoint) breakpoint instead: Edit Breakpoint ->
-//     enable "message" logging with text like `i={i} divisor={divisor}`
-//     and untick "stop on hit". Re-run and watch the Application Output /
-//     Debugger Console print a trace line per iteration without ever
-//     halting -- useful for spotting patterns without single-stepping.
-//   * Also try setting an ignore count (right-click -> "Skip N times")
-//     of 732 on a plain, unconditional breakpoint at the same line, which
-//     achieves the same jump-to-733 result a different way.
+//   * Set a breakpoint on the `int result = value / divisor;` line
+//     (click the left margin, or F9 with your cursor there).
+//   * Right-click that breakpoint (either its red dot in the editor
+//     margin, or its row in the Breakpoints view) and choose
+//     "Edit Breakpoint...". In the dialog, find the "Condition" field
+//     and enter `divisor == 0`. Start debugging (F5): the debugger now
+//     skips straight to the one iteration where that's true, instead of
+//     stopping 1000 times.
+//   * Alternatively, set the condition to `i == 733` to jump to the
+//     exact loop iteration by index instead.
+//   * Try the same dialog's other fields instead: clear the condition,
+//     and set "Ignore count" to `732` on this same breakpoint. This
+//     tells the debugger to silently skip the first 732 hits and only
+//     actually stop on the 733rd -- a different way of reaching the
+//     same iteration.
+//   * Try a *tracepoint* (logging breakpoint) instead of stopping at
+//     all: in the same "Edit Breakpoint..." dialog, check
+//     "Tracepoint only" and put something like `i={i} divisor={divisor}`
+//     in the "Message" field. Start debugging again and watch the
+//     Application Output / Debugger Console print one line per
+//     iteration without the program ever actually pausing -- useful for
+//     spotting a pattern across many iterations without single-stepping
+//     through all of them.
 // ---------------------------------------------------------------------------
 
 namespace {
