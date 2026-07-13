@@ -23,10 +23,6 @@
 //     compute_receipt() call to actually step inside it.
 //   * Once inside add_tax(), press Shift+F11 (Step Out) to run the rest
 //     of that function and pop back up to whatever called it.
-//   * Right-click the `std::println("Final price (cents): {}", total);`
-//     line near the bottom of run_breakpoints_stepping() and choose
-//     "Run to Line" (or place your cursor there and press Ctrl+F10) to
-//     jump straight to it without stepping through everything in between.
 // ---------------------------------------------------------------------------
 
 namespace {
