@@ -12,8 +12,22 @@
 //     and look at `leaked_ptr` in the Locals view: after make_dangling()
 //     has already returned, the `int` it pointed to no longer exists, but
 //     `leaked_ptr` still holds that (now-invalid) address. This is a
-//     "dangling pointer" -- notice the debugger happily shows you the
-//     address; it can't tell you the memory behind it is no longer valid.
+//     "dangling pointer" -- the debugger can't tell you the memory
+//     behind it is no longer valid, so it just shows you whatever is
+//     there.
+//     By default, Qt Creator's "Dereference Pointers Automatically"
+//     setting is on, so Locals shows `*leaked_ptr` directly with its
+//     pointed-to value (77 here) instead of the raw address -- the
+//     pointer row itself is collapsed into its dereferenced value. If
+//     you right-click `leaked_ptr` and turn that option off, Locals
+//     instead shows two rows: `leaked_ptr` with its raw hex address and
+//     type `int *`, and a nested `*leaked_ptr` row underneath showing
+//     the same value (77) it points to. Either way, that value being
+//     readable at all is the "seems to work by accident" trap: the
+//     stack memory for `local_value` hasn't been overwritten by
+//     anything else yet, so the debugger can still read 77 out of it,
+//     even though that memory is no longer valid for your program to
+//     use.
 //   * Set a breakpoint inside buffer_overrun_demo() on the
 //     `std::println("buffer sum = {}", raw_sum);` line. Once stopped,
 //     right-click `buffer` in the Locals view and choose

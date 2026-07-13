@@ -289,16 +289,29 @@ comfortable navigating many stacked frames instead of just one or two.
 1. Set a breakpoint on `int* leaked_ptr = make_dangling();` inside
    `dangling_pointer_demo()`.
 2. Debug (F5), choose `4`. Step over it (F10) and look at `leaked_ptr` in
-   Locals — it holds an address, but the `int` it pointed to
-   (`local_value` inside `make_dangling()`) was destroyed the instant
-   that function returned. This is a **dangling pointer**: the debugger
-   will happily show you the address, because it has no way of knowing
-   the memory behind it is no longer valid.
-   (You may have already noticed your compiler warned about this at
-   build time — `C4172` on MSVC/CDB, `-Wreturn-local-addr` on GCC/Clang.
-   That's the same bug, caught two different ways: once by the compiler
-   while reading your source, and once by the debugger while your
-   program actually runs.)
+   Locals — it points to the `int` that used to be `local_value` inside
+   `make_dangling()`, which was destroyed the instant that function
+   returned. This is a **dangling pointer**: the debugger has no way of
+   knowing the memory behind it is no longer valid, so it just shows you
+   whatever is still sitting there.
+   - By default, Qt Creator's **Dereference Pointers Automatically**
+     option is on, so Locals shows a single row, `*leaked_ptr`, with the
+     dereferenced value (`77`) shown directly, and type `int`.
+   - If you right-click `leaked_ptr` and turn that option off instead,
+     Locals shows two rows: `leaked_ptr` itself, with its raw hex
+     address and type `int *`, and a nested `*leaked_ptr` row under it
+     with the same value (`77`).
+   - Either way, the fact that `77` is still readable at all is the
+     trap: the stack memory for `local_value` hasn't been overwritten by
+     anything else yet, so the debugger can still read the old value out
+     of it — even though that memory is no longer valid for your program
+     to use. This is exactly why dangling-pointer bugs are dangerous:
+     they often *appear* to work by pure accident.
+   - (You may have already noticed your compiler warned about this at
+     build time — `C4172` on MSVC/CDB, `-Wreturn-local-addr` on
+     GCC/Clang. That's the same bug, caught two different ways: once by
+     the compiler while reading your source, and once by the debugger
+     while your program actually runs.)
 3. Set a breakpoint inside `buffer_overrun_demo()`, on the
    `std::println("buffer sum = {}", raw_sum);` line. Step to it, then
    right-click `buffer` in Locals and choose **Open Memory Editor** (you
