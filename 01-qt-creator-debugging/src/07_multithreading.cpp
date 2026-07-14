@@ -148,6 +148,8 @@ void race_condition_demo() {
     for (int i = 0; i < kThreadCount; ++i) {
         workers.emplace_back(increment_unsafe);
     }
+
+    // Wait for all threads to finish before printing the result
     for (auto& t : workers) {
         t.join();
     }
