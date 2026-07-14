@@ -614,34 +614,134 @@ of a data race. `safe_counter` (atomic) and `mutex_counter`
 ### Scenario 8 — Templates & generic code (C++23)
 **File:** `src/08_templates_generic.cpp`
 
+**This scenario assumes you have never worked with templates before**,
+so before touching the debugger, here's what's actually happening in
+the code.
+
+#### What is a template?
+
+Every function you've debugged so far in this lab was compiled exactly
+once — its source and its compiled code are basically the same thing. A
+**template** breaks that assumption: it's not compiled code at all, it's
+a *blueprint* that only becomes real, compiled code once you actually
+use it with a specific type. `sum_all<T>` in this file is declared once,
+but `run_templates_generic()` calls it twice, with two different types:
+
+```
+ template sum_all<T>   (blueprint, not yet real code)
+    |
+    |-- called with vector<int>    --> compiler stamps out sum_all<int>
+    |-- called with vector<double> --> compiler stamps out sum_all<double>
+```
+
+Each of those stamped-out versions is called an **instantiation** — a
+genuinely separate, independently compiled function, even though both
+came from the one block of source you wrote. This is why, later in the
+debugger, a breakpoint on one single source line can report two
+different function names depending on which call reached it.
+
+`Box<T>` works the same way for a class template: `Box<std::string>` in
+this file causes the compiler to generate a real `Box` type specialized
+for `std::string`, with its own compiled `describe()` method — nothing
+about `Box<T>` exists as compiled code until some concrete `T` is used.
+
+#### `concept` — constraining what a template will accept
+
+```cpp
+template <typename T>
+concept Numeric = std::integral<T> || std::floating_point<T>;
+
+template <Numeric T>
+T sum_all(const std::vector<T>& values) { ... }
+```
+
+A **concept** is a named, compiler-checkable rule about what a template
+argument is allowed to be. `Numeric` says "an integer type, or a
+floating-point type." Writing `template <Numeric T>` instead of
+`template <typename T>` tells the compiler to reject anything that
+doesn't satisfy `Numeric` immediately, with a clear error pointing at
+the call site — instead of accepting the call, generating an
+instantiation, and only failing later, deep inside `sum_all`'s body,
+with a much more confusing error. A concept doesn't create more
+instantiations or change what gets compiled; it only *gatekeeps* which
+types are allowed to trigger an instantiation in the first place.
+
+#### `if consteval` — one function, two different bodies
+
+```cpp
+constexpr int classify(int n) {
+    if consteval {
+        return n < 0 ? -1 : 1;          // compile-time-only body
+    } else {
+        return n < 0 ? -1 : (n == 0 ? 0 : 1); // runtime body
+    }
+}
+```
+
+This is a different kind of "two versions from one function" than
+templates: instead of branching on *type*, `if consteval` branches on
+*when* the call happens. If the compiler can fully evaluate the call
+during compilation (a **compile-time context**), it runs the first
+branch — and that branch's code never exists as instructions in your
+final program; it ran once, while the compiler was compiling, and its
+result was baked directly into the binary. If the call happens while
+your program is actually running (a **runtime context**), the second
+branch runs instead, as ordinary compiled code:
+
+```
+classify(n) called
+    |
+    |-- in a compile-time context --> "if consteval" branch runs
+    |                                 *during compilation*; no runtime
+    |                                 instructions left to debug
+    |
+    |-- in a runtime context      --> "else" branch runs as normal
+                                       compiled code; this is the only
+                                       branch a live debugger can ever
+                                       stop inside
+```
+
+`run_templates_generic()` calls `classify(runtime_value)` where
+`runtime_value` isn't a compile-time constant, so it always takes the
+runtime (`else`) path in this scenario.
+
+#### Now, in the debugger
+
 1. Set a breakpoint inside `sum_all()` on the `total += v;` line.
 2. Debug (F5), choose `8`. When it stops (from the `sum_all(ints)` call),
    check the **Stack** view: the top frame's name isn't just "sum_all",
    it shows the concrete instantiated type, something like
-   `sum_all<int>` — a template only becomes real, compiled code once you
-   use it with a specific type.
+   `sum_all<int>` — direct confirmation that the blueprint diagram above
+   is what actually happened at compile time.
 3. Continue (F5): the same breakpoint fires again, this time from the
    `sum_all(doubles)` call. Check the Stack view again — now it shows
-   `sum_all<double>`. Same source line, two genuinely different compiled
-   functions underneath.
+   `sum_all<double>`. Same source line, same breakpoint, two genuinely
+   different compiled functions underneath.
 4. Set a breakpoint inside `Box<T>::describe()`, on the
    `return std::format(...)` line. When it stops, expand `this` in
    Locals — it's a pointer to the current `Box` object, and expanding it
    shows its `value` member, the same way expanding any other pointer
-   would.
+   would. Note the Stack view's frame name here too — it will show the
+   instantiated type, `Box<std::string>::describe`, not just `Box`.
 5. Set a breakpoint inside `classify()`, specifically on the
    `return n < 0 ? -1 : (n == 0 ? 0 : 1);` line (the one inside the
-   `else`). Step through it. You will never be able to stop inside the
-   `if consteval` branch above it with a live debugger: if that branch
-   had been the one taken, it would have run entirely while the program
-   was being *compiled*, and there is no runtime code left for the
-   debugger to pause on.
+   `else`). Step through it — this is the runtime branch, so it behaves
+   like any other line you've debugged so far. Now try setting a
+   breakpoint on the line *above* it, inside the `if consteval` block
+   (`return n < 0 ? -1 : 1;`). Debug again: that breakpoint never fires.
+   That's not a bug — it's the "if consteval" diagram above made literal.
+   Since `classify()` is only ever called here with a runtime value,
+   that branch is dead for this program's *runtime*, even though the
+   compiler still had to understand it while compiling.
 
 **What to notice:** Templates are compiled per instantiation — the
 debugger always shows you the concrete, generated function for the types
 you actually used, which is why the exact same source line can appear
 under different "instantiated" names in the Stack view depending on how
-it was called.
+it was called. `if consteval`'s compile-time branch is a step further:
+it's not just a different compiled function, it's not compiled into
+runtime code *at all*, which is why a live debugger can never pause
+inside it.
 
 ---
 

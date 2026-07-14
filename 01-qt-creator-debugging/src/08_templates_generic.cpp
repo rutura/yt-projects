@@ -8,6 +8,39 @@
 // ---------------------------------------------------------------------------
 // Scenario 08 - Templates & generic code (C++23)
 //
+// A template isn't compiled code by itself -- it's a *blueprint* the
+// compiler stamps out into a real function or class only once you use it
+// with a specific type. sum_all<T> below gets called with a
+// vector<int> and a vector<double>, so the compiler quietly generates
+// two entirely separate functions, sum_all<int> and sum_all<double>,
+// from the one template definition:
+//
+//     template sum_all<T>(blueprint)
+//            |
+//            |-- used with vector<int>    --> compiles sum_all<int>
+//            |-- used with vector<double> --> compiles sum_all<double>
+//
+// That's why the debugger's Stack view can show two different function
+// names for a breakpoint set on one single source line -- see below.
+//
+// `Numeric` is a *concept* (C++20/23): a named, checkable constraint on
+// what a template argument is allowed to be (`std::integral<T> ||
+// std::floating_point<T>`). It doesn't change what gets generated the
+// way the type itself does -- it just makes the compiler reject
+// `sum_all<std::string>` at compile time with a readable error, instead
+// of failing deep inside the function body with a confusing one.
+//
+// `if consteval` picks between two function bodies depending on *when*
+// the call happens, not what type is involved: the same classify()
+// function has one body for compile-time evaluation and a different one
+// for runtime. Only the runtime body is ever real, steppable code in a
+// live debugger -- the compile-time body already finished running
+// during compilation, before your program even started.
+//
+// Full explanation with diagrams, plus step-by-step debugger
+// instructions, is in the project README.md under "Scenario 8 --
+// Templates & generic code".
+//
 // What to try in Qt Creator:
 //   * Set a breakpoint inside the body of sum_all(), on the
 //     `total += v;` line. Start debugging (F5) and, when it stops, look
