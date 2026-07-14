@@ -89,28 +89,59 @@
 // -----------------------------------------------------------------------
 //   * Make sure the Threads view is visible: go to View > Views and
 //     check "Threads" if it isn't already.
-//   * Start debugging (F5) and let race_condition_demo() start running.
-//     While it's executing, go to Debug > Interrupt (there is no default
-//     keyboard shortcut for this) to pause it mid-flight. Look at the
-//     Threads view: you'll see multiple worker threads listed, each with
-//     its own thread id. Click between them -- the Stack and Locals
-//     views update to show that specific thread's own call stack and
-//     variables.
-//   * Continue (F5), then set a breakpoint inside increment_unsafe() on
-//     the `++unsafe_counter;` line and run again. Notice the breakpoint
-//     is hit repeatedly from *different* thread ids (shown in the
-//     Threads view / in the breakpoint hit info) -- several threads are
-//     all racing to run this same line at once.
-//   * Look at the program's own printed output at the end:
+//   * Set a breakpoint on the `++unsafe_counter;` line inside
+//     increment_unsafe() below.
+//   * Start debugging (F5) and choose this scenario. Execution stops the
+//     first time *any* thread reaches that line.
+//   * Open the Threads view and look at its `Function` / `File` / `Line`
+//     columns. You will see MORE rows than just your 4 workers -- CDB/
+//     LLDB also lists internal OS/runtime threads (functions like
+//     NtWaitForSingleObject or NtWaitForWorkViaWorkerFactory, with no
+//     File/Line of their own). Ignore those; they're not your code.
+//     The rows that matter are the ones whose Function names
+//     increment_unsafe and whose Line reads 148 (or wherever your
+//     breakpoint is) -- those are your worker threads. Right after the
+//     very first stop you'll often see just 1, because the other workers
+//     haven't reached the breakpoint yet.
+//   * Press F5 (Continue) a handful of times (5-10 presses is plenty).
+//     Each press resumes every thread until *any one* of them hits the
+//     breakpoint again, so you're sampling the race, not single-stepping
+//     it. Re-check the Threads view after each press -- watch the count
+//     of increment_unsafe rows grow as more workers arrive, and their
+//     thread ids change as different threads take turns being the one
+//     that's currently stopped. Once you've seen up to kThreadCount (4)
+//     of them and watched several different thread ids get hit, you've
+//     seen everything this breakpoint has to show you. (You may also
+//     eventually see FEWER rows than before, if a worker finished its
+//     entire 100,000-iteration loop and exited between presses -- that's
+//     expected too.)
+//   * Click one of the increment_unsafe rows, then another. Watch the
+//     toolbar's thread selector (top of the Debug pane) and the
+//     highlighted row both switch to match -- that confirms you're now
+//     looking at that specific thread. The Stack view will look
+//     IDENTICAL between them: same frames, same line, same depth. That's
+//     expected, not a sign nothing happened -- increment_unsafe() isn't
+//     recursive, so every worker's call stack has the exact same shape.
+//     What actually differs per-thread is the *value*, not the shape:
+//     check the Locals pane for `i` (the loop counter) while each thread
+//     is selected -- each thread has its own independent `i`, frozen at
+//     wherever that particular thread's loop happened to be when it hit
+//     the breakpoint.
+//   * Now remove the breakpoint (or disable it) -- this loop runs
+//     400,000 total increments, and you obviously can't press F5 that
+//     many times by hand. With the breakpoint gone, press F5 once more
+//     to let the program run to completion at full speed, and read its
+//     own printed output:
 //     "unsafe_counter = ... (expected ...) -- mismatch shows the race".
 //     The two numbers essentially never match, because multiple threads
 //     read-modify-wrote `unsafe_counter` at the same time without any
 //     synchronization, and some of those updates were silently lost.
 //   * Compare against increment_safe(), which uses a std::mutex. Set a
 //     breakpoint on the `std::scoped_lock lock(counter_mutex);` line
-//     and run again: only one thread at a time is ever stopped there,
-//     because the others are blocked waiting for the mutex -- you can
-//     confirm this by checking their state in the Threads view.
+//     and debug again: only one thread at a time is ever stopped there,
+//     because the others are blocked waiting for the mutex -- check the
+//     Threads view and you'll see the rest sitting in a waiting/blocked
+//     state instead of also being stopped at your breakpoint.
 // ---------------------------------------------------------------------------
 
 namespace {
