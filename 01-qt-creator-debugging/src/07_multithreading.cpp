@@ -9,7 +9,84 @@
 // ---------------------------------------------------------------------------
 // Scenario 07 - Multithreading (Threads view, data races)
 //
-// What to try in Qt Creator:
+// -----------------------------------------------------------------------
+// Concepts first: what is a thread?
+// -----------------------------------------------------------------------
+// A normal, single-threaded program is one instruction pointer moving
+// through code, start to finish:
+//
+//     main() ----------------------------------------------------> end
+//
+// A multithreaded program starts several *independent* instruction
+// pointers that all run at the same time and all share the same memory
+// (globals, heap objects, etc). Here, race_condition_demo() below spins
+// up kThreadCount (4) worker threads that all call increment_unsafe():
+//
+//     main thread
+//        |
+//        |-- spawn --> Thread 1: increment_unsafe() ---\
+//        |-- spawn --> Thread 2: increment_unsafe() ----\
+//        |-- spawn --> Thread 3: increment_unsafe() ----- all running
+//        |-- spawn --> Thread 4: increment_unsafe() ----/ at once
+//        |                                              /
+//        |<----------------- join() waits for all -----/
+//        v
+//     main thread continues, prints result
+//
+// Each thread runs the exact same function, on its own independent path
+// through it, but they all read and write the *same* `unsafe_counter`
+// variable, because it's declared outside any function (a shared global).
+//
+// -----------------------------------------------------------------------
+// Why sharing memory is dangerous: the data race
+// -----------------------------------------------------------------------
+// `++unsafe_counter;` looks like a single step in the source code, but
+// the CPU actually performs three separate steps to do it:
+//
+//     1. READ  unsafe_counter from memory into a register
+//     2. ADD   1 to that register
+//     3. WRITE the register's new value back to memory
+//
+// If two threads interleave those three steps badly, an update gets
+// silently lost. Picture both threads starting from unsafe_counter == 5:
+//
+//     time -->
+//     Thread 1:   READ (5)   ADD -> 6            WRITE 6
+//     Thread 2:              READ (5)   ADD -> 6            WRITE 6
+//     -----------------------------------------------------------------
+//     unsafe_counter:  5        5         5         6          6
+//
+// Both threads read `5` before either wrote back, so *one entire
+// increment vanished* -- the counter should be 7, but it's 6. This is a
+// "data race": two or more threads accessing the same memory at the same
+// time, with at least one of them writing, and no synchronization to
+// keep their steps from interleaving. It's undefined behavior in C++,
+// and it's exactly what increment_unsafe() below triggers, 100,000 times
+// per thread, 4 threads at once -- so plenty of increments get lost.
+//
+// -----------------------------------------------------------------------
+// Two ways to fix it (both demonstrated below)
+// -----------------------------------------------------------------------
+// Fix 1: std::atomic (see increment_atomic()). An atomic variable makes
+// the whole read-modify-write sequence indivisible at the hardware level
+// -- no other thread can ever observe it "half done". Cheap, no waiting.
+//
+// Fix 2: std::mutex (see increment_safe()). A mutex is a lock: only one
+// thread may hold it at a time. `std::scoped_lock lock(counter_mutex);`
+// grabs the lock and automatically releases it when `lock` goes out of
+// scope at the end of the loop body. Everyone else who wants the lock
+// simply waits (blocks) until it's free:
+//
+//     Thread 1:  [lock]-->[++mutex_counter]-->[unlock]
+//     Thread 2:      ...waiting...                    [lock]-->[++mutex_counter]-->[unlock]
+//
+// This is slower than atomic (threads sit idle instead of working), but
+// it generalizes to protecting more than one variable / a whole block of
+// code at once, which a single atomic cannot do.
+//
+// -----------------------------------------------------------------------
+// What to try in Qt Creator
+// -----------------------------------------------------------------------
 //   * Make sure the Threads view is visible: go to View > Views and
 //     check "Threads" if it isn't already.
 //   * Start debugging (F5) and let race_condition_demo() start running.

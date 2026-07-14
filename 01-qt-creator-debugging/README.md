@@ -441,6 +441,103 @@ bug, not handled at all).
 ### Scenario 7 — Multithreading (Threads view, data races)
 **File:** `src/07_multithreading.cpp`
 
+**This scenario assumes you have never worked with threads before**, so
+before touching the debugger, here's what's actually happening in the
+code, and why it can go wrong.
+
+#### What is a thread?
+
+Every program you've debugged so far in this lab has a single thread:
+one instruction pointer, moving through your code one step at a time,
+start to finish.
+
+```
+main() ------------------------------------------------------> end
+```
+
+Multithreading means starting several of these "execution pointers" at
+once. They all run *simultaneously* (or at least appear to — more on
+that below), and, critically, they all share the same memory: the same
+global variables, the same heap objects. `race_condition_demo()` in this
+file spawns `kThreadCount` (4) worker threads that each independently run
+`increment_unsafe()`:
+
+```
+ main thread
+    |
+    |-- spawn --> Thread 1: increment_unsafe() --\
+    |-- spawn --> Thread 2: increment_unsafe() ---\
+    |-- spawn --> Thread 3: increment_unsafe() ---- all 4 running
+    |-- spawn --> Thread 4: increment_unsafe() ---/ at the same time
+    |                                             /
+    |<---------- t.join() waits for all 4 -------/
+    v
+ main thread continues, prints the result
+```
+
+`t.join()` is how the main thread waits for a worker to finish — without
+it, `main` could print the result before the workers are even done.
+Each worker runs the *same* function independently, but all four are
+incrementing the *one* shared `unsafe_counter` variable declared at
+file scope (line 44) — that sharing is exactly where the trouble starts.
+
+#### Why sharing memory is dangerous: the data race
+
+`++unsafe_counter;` reads like a single, indivisible action in C++
+source. It isn't. The CPU actually carries it out in three separate
+steps:
+
+```
+1. READ  unsafe_counter from memory into a register
+2. ADD   1 to that register
+3. WRITE the register's new value back to memory
+```
+
+As long as only one thread ever does this, that's harmless. But once
+two threads interleave these three steps on the *same* memory, an
+update can vanish. Walk through what happens if both threads start from
+`unsafe_counter == 5`:
+
+```
+                time ------------------------------------------->
+Thread 1:   READ(5)   ADD->6              WRITE 6
+Thread 2:                     READ(5)   ADD->6              WRITE 6
+----------------------------------------------------------------------
+counter:  5        5           5          6          6         6
+```
+
+Both threads read `5` *before either had written back*, so one whole
+increment is lost — the counter should now be `7`, but it's `6`. This is
+a **data race**: two-or-more threads touching the same memory at the
+same time, at least one of them writing, with nothing forcing their
+steps to happen one-at-a-time. It's undefined behavior in C++, and with
+4 threads each doing 100,000 increments (`kIncrementsPerThread`), plenty
+of updates get quietly dropped this way.
+
+#### Two ways to fix it
+
+**`std::atomic` (`increment_atomic()`)** — an atomic integer makes the
+whole read-modify-write sequence a single indivisible hardware operation.
+No other thread can ever observe it "half done." Fast, no waiting
+involved.
+
+**`std::mutex` (`increment_safe()`)** — a mutex ("mutual exclusion") is a
+lock. Only one thread may hold it at a time; `std::scoped_lock
+lock(counter_mutex);` acquires it and automatically releases it when
+`lock` goes out of scope at the end of that loop iteration. Every other
+thread that wants the lock simply **blocks** (waits) until it's free:
+
+```
+Thread 1:  [lock]--[++mutex_counter]--[unlock]
+Thread 2:      ...blocked, waiting...          [lock]--[++mutex_counter]--[unlock]
+```
+
+This is slower than atomic (idle threads instead of working ones), but a
+mutex can protect an entire block of code or several variables at once —
+something a single atomic can't do.
+
+#### Now, in the debugger
+
 1. Make sure the **Threads** view is visible (View > Views > Threads if
    not).
 2. Debug (F5), choose `7`, and let `race_condition_demo()` start running.
@@ -449,17 +546,21 @@ bug, not handled at all).
    button) to pause it mid-flight. Look at the Threads view: you'll see
    several worker threads listed, each with its own thread id. Click
    between them — the Stack and Locals views update to show that
-   specific thread's own call stack and variables.
+   specific thread's own call stack and variables. This is the debugger
+   making the diagram above literal: each row in the Threads view really
+   is one of those independent, simultaneously-running arrows.
 3. Continue (F5), then stop the session and set a breakpoint inside
    `increment_unsafe()` on the `++unsafe_counter;` line. Debug again.
    Notice the breakpoint is hit repeatedly from **different thread ids**
    (visible in the Threads view / in the breakpoint hit details) —
-   several threads are all racing to execute this exact line at once.
+   several threads are all racing to execute this exact line at once,
+   each one mid-way through its own READ / ADD / WRITE sequence.
 4. Let it run to completion and read the program's own printed output:
    `unsafe_counter = ... (expected ...) -- mismatch shows the race`. The
    two numbers essentially never match, because multiple threads read,
    incremented, and wrote back `unsafe_counter` at the same time without
-   any synchronization, silently losing some of those updates.
+   any synchronization, silently losing some of those updates — the
+   exact scenario walked through in the timing diagram above.
 5. Compare against `increment_safe()`, which uses a `std::mutex`. Set a
    breakpoint on the `std::scoped_lock lock(counter_mutex);` line and run
    again: at any moment, only one thread is ever stopped there — the
