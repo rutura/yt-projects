@@ -1,4 +1,6 @@
+#include <array>
 #include <print>
+#include <string_view>
 
 #include "scenarios.h"
 
@@ -28,18 +30,18 @@
 
 void scenarios::run_conditional_breakpoints() {
     struct Order {
-        const char* customer;
+        std::string_view customer;
         int quantity;
         int unit_price;
     };
 
-    const Order orders[] = {
+    const std::array<Order, 5> orders{{
         {"Aria",   2, 15},
         {"Beno",   1, 40},
         {"Chidi",  20, 5},
         {"Dax",    3, 0},
         {"Elin",   4, 12},
-    };
+    }};
 
     for (const Order& order : orders) {
         const int quantity = order.quantity;
