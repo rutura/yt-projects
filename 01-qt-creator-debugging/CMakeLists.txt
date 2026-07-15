@@ -4,16 +4,6 @@ project(QtCreatorDebuggingLab LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-#set(CMAKE_CXX_EXTENSIONS OFF)
-
-#set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
-# Default to a Debug build so the first CMake configure a student does in
-# Qt Creator already produces a fully debuggable binary (unoptimized, with
-# debug symbols) via CMake's normal, compiler-agnostic Debug config.
-# if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
-#     set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
-# endif()
 
 add_executable(qt_creator_debugging_lab
     src/main.cpp
