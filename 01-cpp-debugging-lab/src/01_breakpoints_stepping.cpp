@@ -5,24 +5,7 @@
 
 // ---------------------------------------------------------------------------
 // Scenario 01 - Breakpoints & stepping
-//
-// This is the very first scenario: if this is your first time using a
-// debugger, start here. Full walkthrough in README.md "Scenario 1" -- the
-// short version:
-//   * Click in the editor's left margin (the thin strip left of the line
-//     numbers) on the `double price = base_price(item);` line, OR put
-//     your cursor on that line and press F9. A red dot appears: that's a
-//     breakpoint.
-//   * Start debugging: press F5 (or Debug > Start Debugging). Qt Creator
-//     builds the project if needed, launches it, and the console window
-//     runs until it reaches your breakpoint, where it pauses.
-//   * Press F10 (Step Over) repeatedly to walk through apply_discount()
-//     and add_tax() one call at a time, without diving inside them.
-//   * Restart (Shift+F5 to stop, F5 to start again), stop at the same
-//     breakpoint, and this time press F11 (Step Into) on the
-//     compute_receipt() call to actually step inside it.
-//   * Once inside add_tax(), press Shift+F11 (Step Out) to run the rest
-//     of that function and pop back up to whatever called it.
+// See README.md, Scenario 1, for the full walkthrough.
 // ---------------------------------------------------------------------------
 
 namespace {

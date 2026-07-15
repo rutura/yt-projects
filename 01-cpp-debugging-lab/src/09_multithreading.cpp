@@ -7,7 +7,7 @@
 #include "scenarios.h"
 
 // ---------------------------------------------------------------------------
-// Scenario 09 - Multithreading (Threads view, data races)
+// Scenario 09 - Multithreading (threads view, data races)
 //
 // race_condition_demo() below starts kThreadCount (4) threads that all
 // call increment_unsafe() at once. They all read, add 1, and write back
@@ -24,9 +24,8 @@
 // below.
 //
 // Full explanation (what a thread is, why the race happens, atomic vs.
-// mutex, and step-by-step debugger instructions -- including the exact
-// Threads view quirks you'll hit on real hardware) lives in the project
-// README.md, under "Scenario 7 -- Multithreading". Read that before
+// mutex, and step-by-step debugger instructions) lives in the project
+// README.md, under "Scenario 9 -- Multithreading". Read that before
 // debugging this file.
 // ---------------------------------------------------------------------------
 

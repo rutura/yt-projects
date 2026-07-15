@@ -20,8 +20,8 @@
 //            |-- used with vector<int>    --> compiles sum_all<int>
 //            |-- used with vector<double> --> compiles sum_all<double>
 //
-// That's why the debugger's Stack view can show two different function
-// names for a breakpoint set on one single source line -- see below.
+// That's why a breakpoint set on one single source line inside sum_all()
+// can report two different instantiated function names -- see README.md.
 //
 // `Numeric` is a *concept* (C++20/23): a named, checkable constraint on
 // what a template argument is allowed to be (`std::integral<T> ||
@@ -40,31 +40,6 @@
 // Full explanation with diagrams, plus step-by-step debugger
 // instructions, is in the project README.md under "Scenario 8 --
 // Templates & generic code".
-//
-// What to try in Qt Creator:
-//   * Set a breakpoint inside the body of sum_all(), on the
-//     `total += v;` line. Start debugging (F5) and, when it stops, look
-//     at the Stack view (View > Views > Stack if it's not visible). The
-//     top frame's name won't just say "sum_all" -- it will show the
-//     concrete instantiated type, something like `sum_all<int>`, because
-//     a template only becomes real, compiled code once you use it with a
-//     specific type.
-//   * Continue (F5): the same breakpoint fires again, this time from the
-//     `sum_all(doubles)` call. Check the Stack view again -- now it
-//     shows `sum_all<double>`. Same source line, two genuinely different
-//     compiled functions.
-//   * Set a breakpoint inside Box<T>::describe(), on the
-//     `return std::format(...)` line. When it stops, expand `this` in
-//     the Locals view -- it's a pointer to the current Box object, and
-//     expanding it shows you its `value` member, the same way expanding
-//     any other pointer would.
-//   * Set a breakpoint inside classify(), specifically on the
-//     `return n < 0 ? -1 : (n == 0 ? 0 : 1);` line (the one inside the
-//     `else`). Step through it. You will never be able to stop inside
-//     the `if consteval` branch above it with a live debugger: if that
-//     branch had been the one selected, it would have run entirely
-//     while the program was being compiled, and there is no runtime
-//     code for the debugger to pause on.
 // ---------------------------------------------------------------------------
 
 namespace {
@@ -76,7 +51,7 @@ template <Numeric T>
 T sum_all(const std::vector<T>& values) {
     T total{};
     for (const T& v : values) {
-        total += v; // <-- breakpoint here; check the instantiated type in Stack view
+        total += v; // <-- breakpoint here; check the instantiated type in the call stack
     }
     return total;
 }

@@ -75,7 +75,7 @@ constexpr std::array<MenuItem, 9> kMenu{{
 
 void print_menu() {
     std::println("==================================================================");
-    std::println(" Qt Creator C++23 Debugging Lab");
+    std::println(" C++23 Debugging Lab");
     std::println("==================================================================");
     for (const auto& item : kMenu) {
         std::println("  [{:2}] {:<55} ({})", item.number, item.title, item.file);

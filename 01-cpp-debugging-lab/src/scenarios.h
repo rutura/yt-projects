@@ -2,7 +2,7 @@
 
 // Each scenario is a self-contained "chapter" of the debugging lab.
 // main.cpp presents a menu and calls straight into one of these.
-// See README.md for what to inspect in Qt Creator for each one.
+// See README.md for what to inspect in your debugger for each one.
 
 namespace scenarios {
 
