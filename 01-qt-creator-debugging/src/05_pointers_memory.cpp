@@ -4,7 +4,7 @@
 #include "scenarios.h"
 
 // ---------------------------------------------------------------------------
-// Scenario 04 - Pointers, memory view & undefined behavior
+// Scenario 05 - Pointers, memory view & undefined behavior
 //
 // What to try in Qt Creator:
 //   * Set a breakpoint at the start of dangling_pointer_demo() (the

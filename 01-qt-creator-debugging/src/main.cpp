@@ -16,7 +16,7 @@ struct MenuItem {
     void (*run)();
 };
 
-constexpr std::array<MenuItem, 10> kMenu{{
+constexpr std::array<MenuItem, 9> kMenu{{
     {
         1,
         "Breakpoints & stepping (step in/over/out, run to line)",
@@ -37,27 +37,27 @@ constexpr std::array<MenuItem, 10> kMenu{{
     },
     {
         4,
-        "Pointers, memory view & undefined behavior",
-        "04_pointers_memory.cpp",
-        scenarios::run_pointers_memory,
+        "Conditional breakpoints",
+        "04_conditional_breakpoints.cpp",
+        scenarios::run_conditional_breakpoints,
     },
     {
         5,
-        "STL containers & pretty-printers",
-        "05_containers_stl.cpp",
-        scenarios::run_containers_stl,
+        "Pointers, memory view & undefined behavior",
+        "05_pointers_memory.cpp",
+        scenarios::run_pointers_memory,
     },
     {
         6,
-        "Exceptions & the exception breakpoint",
-        "06_exceptions.cpp",
-        scenarios::run_exceptions,
+        "STL containers & pretty-printers",
+        "06_containers_stl.cpp",
+        scenarios::run_containers_stl,
     },
     {
         7,
-        "Multithreading (Threads view, data races, deadlocks)",
-        "07_multithreading.cpp",
-        scenarios::run_multithreading,
+        "Exceptions & the exception breakpoint",
+        "07_exceptions.cpp",
+        scenarios::run_exceptions,
     },
     {
         8,
@@ -67,15 +67,9 @@ constexpr std::array<MenuItem, 10> kMenu{{
     },
     {
         9,
-        "Conditional / logging breakpoints in a hot loop",
-        "09_conditional_breakpoints.cpp",
-        scenarios::run_conditional_breakpoints,
-    },
-    {
-        10,
-        "Debug vs. Release: optimized-build debugging quirks",
-        "10_optimized_release_debugging.cpp",
-        scenarios::run_optimized_release_debugging,
+        "Multithreading (Threads view, data races, deadlocks)",
+        "09_multithreading.cpp",
+        scenarios::run_multithreading,
     },
 }};
 

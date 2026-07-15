@@ -4,12 +4,12 @@ A single CMake project built specifically to give you hands-on practice with
 **every major debugging feature in Qt Creator**, using plain, modern C++23
 (no Qt libraries required). Each numbered scenario is a small, self-contained
 "chapter" that puts you in front of one debugging concept: breakpoints,
-inspecting and changing variables, the call stack, memory inspection,
-undefined behavior, STL pretty-printers, exceptions, threads, templates,
-conditional breakpoints, and optimized-build quirks.
+inspecting and changing variables, the call stack, conditional
+breakpoints, memory inspection, undefined behavior, STL pretty-printers,
+exceptions, templates, and threads.
 
 **This guide assumes you have never used a debugger before.** By the end of
-all ten scenarios, you should be comfortable enough with Qt Creator's
+all nine scenarios, you should be comfortable enough with Qt Creator's
 debugger to reach for it by default instead of adding `std::println`
 statements everywhere to figure out what your program is doing.
 
@@ -49,7 +49,7 @@ worded slightly differently — the *idea* behind each step will still apply.
   - GCC/Clang kits use **GDB** or **LLDB**.
   - A few things in this guide differ slightly depending on which backend
     you have — those are called out explicitly (most notably in
-    Scenario 6).
+    Scenario 7).
 - CMake 3.25+ (Qt Creator can also use its own bundled CMake, under
   `Qt\Tools\CMake_64`).
 
@@ -72,9 +72,7 @@ No third-party libraries are used — only the standard library and
 5. Build once with **Ctrl+B** (or **Build > Build Project**) to confirm
    everything compiles. The first build may take a little longer while
    CMake configures.
-6. The only run target for now is `qt_creator_debugging_lab` (Scenario 10
-   walks you through adding a second **build configuration** later, which
-   is a different thing from a run target).
+6. The only run target for now is `qt_creator_debugging_lab`.
 7. **Required one-time step: enable "Run in terminal".** This program is a
    console app that reads your scenario choice from the keyboard via
    `std::cin`. Qt Creator's default Application Output pane does **not**
@@ -283,12 +281,40 @@ comfortable navigating many stacked frames instead of just one or two.
 
 ---
 
-### Scenario 4 — Pointers, memory view & undefined behavior
-**File:** `src/04_pointers_memory.cpp`
+### Scenario 4 — Conditional breakpoints
+**File:** `src/04_conditional_breakpoints.cpp`
+
+We want a breakpoint that only triggers when a specific condition is met,
+instead of stopping on every hit. Below, the same line runs once per
+order, with a different `quantity` and `unit_price` each time. A plain
+breakpoint there stops on every order; a conditional breakpoint lets you
+stop only on the one you actually care about.
+
+1. Set a breakpoint on the `const int total = quantity * unit_price;`
+   line.
+2. Debug (F5), choose `4`. Notice it stops on every single order.
+3. Stop the session. Right-click that breakpoint (its red marker in the
+   editor margin, or its row in the **Breakpoints** view) and choose
+   **Edit Breakpoint...**. In the dialog, find the **Condition** field and
+   enter `quantity > 10`. Debug again — the debugger skips straight to the
+   one order where that's true, instead of stopping on all of them.
+4. Try a different condition instead, such as `unit_price == 0`, to land
+   on the free/comped order.
+
+**What to notice:** Condition is one field on the same "Edit
+Breakpoint..." dialog you'll come back to for logging breakpoints and
+ignore counts later in this lab — the underlying idea is always "stop
+here, but only when this is true," instead of forcing you to manually
+skip past every uninteresting hit.
+
+---
+
+### Scenario 5 — Pointers, memory view & undefined behavior
+**File:** `src/05_pointers_memory.cpp`
 
 1. Set a breakpoint on `int* leaked_ptr = make_dangling();` inside
    `dangling_pointer_demo()`.
-2. Debug (F5), choose `4`. Step over it (F10) and look at `leaked_ptr` in
+2. Debug (F5), choose `5`. Step over it (F10) and look at `leaked_ptr` in
    Locals — it points to the `int` that used to be `local_value` inside
    `make_dangling()`, which was destroyed the instant that function
    returned. This is a **dangling pointer**: the debugger has no way of
@@ -356,13 +382,13 @@ being enough to explain a bug.
 
 ---
 
-### Scenario 5 — STL containers & pretty-printers
-**File:** `src/05_containers_stl.cpp`
+### Scenario 6 — STL containers & pretty-printers
+**File:** `src/06_containers_stl.cpp`
 
 1. Set a breakpoint on the `std::optional<int> maybe_missing = 42;` line
    (by this point, `scores`, `name_to_id`, and `fast_lookup` are already
    filled in, so all three are visible in Locals when you stop here).
-2. Debug (F5), choose `5`. Expand `scores` (a `std::vector<int>`) in
+2. Debug (F5), choose `6`. Expand `scores` (a `std::vector<int>`) in
    Locals: instead of raw internal pointers, you get a clean, indexed
    list of the actual `int` values — this readable rendering is called a
    "pretty-printer."
@@ -388,8 +414,8 @@ pointer/size/capacity triplet by hand.
 
 ---
 
-### Scenario 6 — Exceptions & breaking on the throw site
-**File:** `src/06_exceptions.cpp`
+### Scenario 7 — Exceptions & breaking on the throw site
+**File:** `src/07_exceptions.cpp`
 
 The setup step here depends on which debugger backend your kit uses —
 check via **Help > About Qt Creator**, which shows your compiler (e.g.
@@ -414,7 +440,7 @@ backend):**
 
 Either way, once exception breaking is enabled:
 
-1. Start debugging (F5), choose `6`. Execution stops the instant
+1. Start debugging (F5), choose `7`. Execution stops the instant
    `throw std::invalid_argument(...)` runs inside `divide()` — **not** at
    the `catch` block — so you land exactly where and why it was thrown,
    with the full call stack back to wherever `divide()` was called from.
@@ -435,179 +461,6 @@ you've explicitly set, or when the program crashes — not at every
 `throw`. Breaking on exceptions is how you catch the *moment* something
 goes wrong, instead of only where it's eventually handled (or, in a real
 bug, not handled at all).
-
----
-
-### Scenario 7 — Multithreading (Threads view, data races)
-**File:** `src/07_multithreading.cpp`
-
-**This scenario assumes you have never worked with threads before**, so
-before touching the debugger, here's what's actually happening in the
-code, and why it can go wrong.
-
-#### What is a thread?
-
-Every program you've debugged so far in this lab has a single thread:
-one instruction pointer, moving through your code one step at a time,
-start to finish.
-
-```
-main() ------------------------------------------------------> end
-```
-
-Multithreading means starting several of these "execution pointers" at
-once. They all run *simultaneously* (or at least appear to — more on
-that below), and, critically, they all share the same memory: the same
-global variables, the same heap objects. `race_condition_demo()` in this
-file spawns `kThreadCount` (4) worker threads that each independently run
-`increment_unsafe()`:
-
-```
- main thread
-    |
-    |-- spawn --> Thread 1: increment_unsafe() --\
-    |-- spawn --> Thread 2: increment_unsafe() ---\
-    |-- spawn --> Thread 3: increment_unsafe() ---- all 4 running
-    |-- spawn --> Thread 4: increment_unsafe() ---/ at the same time
-    |                                             /
-    |<---------- t.join() waits for all 4 -------/
-    v
- main thread continues, prints the result
-```
-
-`t.join()` is how the main thread waits for a worker to finish — without
-it, `main` could print the result before the workers are even done.
-Each worker runs the *same* function independently, but all four are
-incrementing the *one* shared `unsafe_counter` variable declared at
-file scope (line 44) — that sharing is exactly where the trouble starts.
-
-#### Why sharing memory is dangerous: the data race
-
-`++unsafe_counter;` reads like a single, indivisible action in C++
-source. It isn't. The CPU actually carries it out in three separate
-steps:
-
-```
-1. READ  unsafe_counter from memory into a register
-2. ADD   1 to that register
-3. WRITE the register's new value back to memory
-```
-
-As long as only one thread ever does this, that's harmless. But once
-two threads interleave these three steps on the *same* memory, an
-update can vanish. Walk through what happens if both threads start from
-`unsafe_counter == 5`:
-
-```
-                time ------------------------------------------->
-Thread 1:   READ(5)   ADD->6              WRITE 6
-Thread 2:                     READ(5)   ADD->6              WRITE 6
-----------------------------------------------------------------------
-counter:  5        5           5          6          6         6
-```
-
-Both threads read `5` *before either had written back*, so one whole
-increment is lost — the counter should now be `7`, but it's `6`. This is
-a **data race**: two-or-more threads touching the same memory at the
-same time, at least one of them writing, with nothing forcing their
-steps to happen one-at-a-time. It's undefined behavior in C++, and with
-4 threads each doing 100,000 increments (`kIncrementsPerThread`), plenty
-of updates get quietly dropped this way.
-
-#### Two ways to fix it
-
-**`std::atomic` (`increment_atomic()`)** — an atomic integer makes the
-whole read-modify-write sequence a single indivisible hardware operation.
-No other thread can ever observe it "half done." Fast, no waiting
-involved.
-
-**`std::mutex` (`increment_safe()`)** — a mutex ("mutual exclusion") is a
-lock. Only one thread may hold it at a time; `std::scoped_lock
-lock(counter_mutex);` acquires it and automatically releases it when
-`lock` goes out of scope at the end of that loop iteration. Every other
-thread that wants the lock simply **blocks** (waits) until it's free:
-
-```
-Thread 1:  [lock]--[++mutex_counter]--[unlock]
-Thread 2:      ...blocked, waiting...          [lock]--[++mutex_counter]--[unlock]
-```
-
-This is slower than atomic (idle threads instead of working ones), but a
-mutex can protect an entire block of code or several variables at once —
-something a single atomic can't do.
-
-#### Now, in the debugger
-
-Don't try to catch the threads by manually pausing the program — 4
-threads racing through 100,000 tight increments each finish in well
-under a millisecond, far faster than any human can react to. Let a
-**breakpoint** do the pausing instead; it's reliable on every run.
-
-1. Make sure the **Threads** view is visible (View > Views > Threads if
-   not).
-2. Set a breakpoint inside `increment_unsafe()` on the
-   `++unsafe_counter;` line.
-3. Debug (F5), choose `7`. Execution stops the moment *any* worker
-   thread reaches that line. Open the Threads view and look at its
-   **Function** / **File** / **Line** columns:
-   - You'll see **more rows than just your 4 workers**. CDB/LLDB also
-     lists internal OS/runtime threads — rows whose Function is
-     something like `NtWaitForSingleObject` or
-     `NtWaitForWorkViaWorkerFactory`, with no File/Line of their own.
-     Those aren't your code — ignore them.
-   - The rows that matter are the ones whose **Function** names
-     `increment_unsafe` and whose **Line** shows your breakpoint's line
-     number. Those are your worker threads. Right after the very first
-     stop you'll often see just **1** of these rows, since the other
-     workers haven't reached the breakpoint yet.
-4. Press **F5 (Continue)** a handful of times (5–10 presses is plenty).
-   Each press resumes *every* thread until any one of them hits the
-   breakpoint again, so you're sampling the race rather than
-   single-stepping it. Re-check the Threads view after each press:
-   - Watch the count of `increment_unsafe` rows grow as more workers
-     arrive at the breakpoint — you should eventually see up to
-     **4 at once**.
-   - Watch their **thread ids** — different presses land on different
-     threads, direct proof several threads are all racing to reach this
-     exact line, over and over, with no fixed order between them.
-   - You may also eventually see *fewer* rows than before, if a worker
-     finished its entire 100,000-iteration loop and exited between
-     presses — that's expected too, not a bug in the setup.
-5. Click one `increment_unsafe` row, then another (if you have more than
-   one). Watch the thread selector in the Debug toolbar and the
-   highlighted row both switch to match — that's your confirmation you
-   switched threads. **The Stack view will look identical between
-   them** — same function names, same line, same depth — and that's
-   expected, not a sign nothing happened: `increment_unsafe()` isn't
-   recursive, so every worker's call stack always has the same shape.
-   What actually differs per-thread is a *value*, not the stack shape:
-   open the **Locals** pane and check `i` (the loop counter) while each
-   thread is selected — each thread has its own independent copy,
-   frozen wherever that particular thread's loop happened to be when it
-   hit the breakpoint. This is the debugger making the "spawn" diagram
-   above literal: each `increment_unsafe` row really is one of those
-   simultaneously-running, independently-progressing arrows.
-6. Now **remove the breakpoint** (or disable it). This loop runs 400,000
-   total increments — you obviously can't press F5 that many times by
-   hand. With the breakpoint gone, press F5 once more to let the program
-   run to completion at full speed, and read its own printed output:
-   `unsafe_counter = ... (expected ...) -- mismatch shows the race`. The
-   two numbers essentially never match, because multiple threads read,
-   incremented, and wrote back `unsafe_counter` at the same time without
-   any synchronization, silently losing some of those updates — the
-   exact scenario walked through in the timing diagram above.
-7. Compare against `increment_safe()`, which uses a `std::mutex`. Set a
-   breakpoint on the `std::scoped_lock lock(counter_mutex);` line and
-   debug again: at any moment, only one thread is ever stopped there —
-   check the Threads view and you'll see the rest sitting in a
-   waiting/blocked state rather than also being paused at your
-   breakpoint, since they're stuck waiting for the mutex to be released.
-
-**What to notice:** `unsafe_counter`'s final value is *non-deterministic*
-— run the program a few times and the exact wrong number will vary, but
-it will essentially never equal the expected total. That's the signature
-of a data race. `safe_counter` (atomic) and `mutex_counter`
-(mutex-guarded) are always correct, every time.
 
 ---
 
@@ -745,92 +598,176 @@ inside it.
 
 ---
 
-### Scenario 9 — Conditional & logging breakpoints in a hot loop
-**File:** `src/09_conditional_breakpoints.cpp`
+### Scenario 9 — Multithreading (Threads view, data races)
+**File:** `src/09_multithreading.cpp`
 
-This scenario loops 1000 times; exactly once (`i == 733`) a helper
-function returns a dangerous value. Finding that one iteration by
-stepping 1000 times would be miserable — which is the point of this
-scenario.
+**This scenario assumes you have never worked with threads before**, so
+before touching the debugger, here's what's actually happening in the
+code, and why it can go wrong.
 
-1. Set a breakpoint on `int result = value / divisor;`.
-2. Right-click that breakpoint (either its red marker in the editor
-   margin, or its row in the **Breakpoints** view) and choose
-   **Edit Breakpoint...**. In the dialog, find the **Condition** field
-   and enter `divisor == 0`. Debug (F5), choose `9` — the debugger now
-   skips straight to the one iteration where that condition is true,
-   instead of stopping 1000 times.
-3. Alternative: set the condition to `i == 733` instead, to jump by loop
-   index rather than by the value that would be zero.
-4. Alternative approach: clear the condition, and instead set that same
-   dialog's **Ignore count** field to `732`. This tells the debugger to
-   silently skip the first 732 hits and only actually stop on the 733rd
-   — a different way of reaching the same iteration.
-5. Try a **tracepoint** (logging breakpoint) instead of stopping at all:
-   in the same "Edit Breakpoint..." dialog, check **Tracepoint only**
-   and put something like `i={i} divisor={divisor}` in the **Message**
-   field. Debug again and watch the Application Output / Debugger
-   Console print one line per iteration without the program ever
-   actually pausing — useful for spotting a pattern across many
-   iterations without single-stepping through all of them.
+#### What is a thread?
 
-**What to notice:** Condition, Ignore count, and Tracepoint/Message are
-three different fields on the exact same "Edit Breakpoint..." dialog,
-each solving the same underlying problem — a bug buried deep in a loop,
-or a breakpoint hit from thousands of call sites — without forcing you to
-manually step past every uninteresting hit.
+Every program you've debugged so far in this lab has a single thread:
+one instruction pointer, moving through your code one step at a time,
+start to finish.
 
----
+```
+main() ------------------------------------------------------> end
+```
 
-### Scenario 10 — Debug vs. Release: optimized-build debugging quirks
-**File:** `src/10_optimized_release_debugging.cpp`
+Multithreading means starting several of these "execution pointers" at
+once. They all run *simultaneously* (or at least appear to — more on
+that below), and, critically, they all share the same memory: the same
+global variables, the same heap objects. `race_condition_demo()` in this
+file spawns `kThreadCount` (4) worker threads that each independently run
+`increment_unsafe()`:
 
-Every other scenario runs from a normal **Debug** build (unoptimized,
-full debug info) — the default this project configures. This scenario is
-best understood by comparing that Debug build against a second,
-**optimized** build of the exact same source.
+```
+ main thread
+    |
+    |-- spawn --> Thread 1: increment_unsafe() --\
+    |-- spawn --> Thread 2: increment_unsafe() ---\
+    |-- spawn --> Thread 3: increment_unsafe() ---- all 4 running
+    |-- spawn --> Thread 4: increment_unsafe() ---/ at the same time
+    |                                             /
+    |<---------- t.join() waits for all 4 -------/
+    v
+ main thread continues, prints the result
+```
 
-1. Switch to **Projects** mode (Ctrl+5), select your kit, and open
-   **Build Settings**.
-2. Under "Edit build configuration", click **Add** and choose a new
-   configuration based on **RelWithDebInfo** (or click **Clone** on the
-   existing Debug configuration and change its `CMAKE_BUILD_TYPE`
-   variable to `RelWithDebInfo`). This build type is compiler-agnostic —
-   CMake maps it to "optimizations on, but debug info still generated"
-   automatically for MSVC, GCC, and Clang alike, with no manual flags
-   needed on your part.
-3. Let Qt Creator reconfigure and build this new configuration.
-4. Set a breakpoint inside `inefficient_sum()` on the `subtotal += j;`
-   line.
-5. With the **Debug** configuration active, debug (F5), choose `10`, and
-   step through (F10) — every loop iteration and the `subtotal`
-   temporary are visible exactly as written, updating one step at a
-   time.
-6. Switch the active build configuration to the new **RelWithDebInfo**
-   one (back in Projects mode, or via **Ctrl+E, Ctrl+B** to jump straight
-   to editing the active configuration), rebuild, and debug again with
-   the **same breakpoint**.
-7. Compare what you see: in the optimized build, the breakpoint may be
-   hit far fewer times than expected, or `subtotal` may show as
-   **`<optimized out>`** (or "not in scope") in Locals — the compiler
-   inlined or unrolled the loop, or kept `subtotal` purely in a CPU
-   register with no stable memory address left for the debugger to point
-   at. This is one of the most common "wait, why doesn't the debugger
-   match my code?" moments in real C++ development, and it's exactly why
-   bugs that only reproduce in Release builds are so much more painful to
-   chase down.
-8. While stopped, go to **Debug > Operate by Instruction** (or the
-   matching debugger toolbar button) to switch the editor to a
-   Disassembler view of the current function's actual machine code. Try
-   this in both builds and compare — the Debug build's disassembly
-   closely mirrors your C++ line by line, while the RelWithDebInfo
-   build's is usually noticeably shorter and reordered.
+`t.join()` is how the main thread waits for a worker to finish — without
+it, `main` could print the result before the workers are even done.
+Each worker runs the *same* function independently, but all four are
+incrementing the *one* shared `unsafe_counter` variable declared at
+file scope (line 44) — that sharing is exactly where the trouble starts.
 
-**What to notice:** Optimized builds are harder to debug because the
-compiler has legally rearranged, inlined, or eliminated things your
-source code implies exist as separate steps. Once you've seen this once
-deliberately, you'll recognize it immediately the next time it happens to
-you by surprise.
+#### Why sharing memory is dangerous: the data race
+
+`++unsafe_counter;` reads like a single, indivisible action in C++
+source. It isn't. The CPU actually carries it out in three separate
+steps:
+
+```
+1. READ  unsafe_counter from memory into a register
+2. ADD   1 to that register
+3. WRITE the register's new value back to memory
+```
+
+As long as only one thread ever does this, that's harmless. But once
+two threads interleave these three steps on the *same* memory, an
+update can vanish. Walk through what happens if both threads start from
+`unsafe_counter == 5`:
+
+```
+                time ------------------------------------------->
+Thread 1:   READ(5)   ADD->6              WRITE 6
+Thread 2:                     READ(5)   ADD->6              WRITE 6
+----------------------------------------------------------------------
+counter:  5        5           5          6          6         6
+```
+
+Both threads read `5` *before either had written back*, so one whole
+increment is lost — the counter should now be `7`, but it's `6`. This is
+a **data race**: two-or-more threads touching the same memory at the
+same time, at least one of them writing, with nothing forcing their
+steps to happen one-at-a-time. It's undefined behavior in C++, and with
+4 threads each doing 100,000 increments (`kIncrementsPerThread`), plenty
+of updates get quietly dropped this way.
+
+#### Two ways to fix it
+
+**`std::atomic` (`increment_atomic()`)** — an atomic integer makes the
+whole read-modify-write sequence a single indivisible hardware operation.
+No other thread can ever observe it "half done." Fast, no waiting
+involved.
+
+**`std::mutex` (`increment_safe()`)** — a mutex ("mutual exclusion") is a
+lock. Only one thread may hold it at a time; `std::scoped_lock
+lock(counter_mutex);` acquires it and automatically releases it when
+`lock` goes out of scope at the end of that loop iteration. Every other
+thread that wants the lock simply **blocks** (waits) until it's free:
+
+```
+Thread 1:  [lock]--[++mutex_counter]--[unlock]
+Thread 2:      ...blocked, waiting...          [lock]--[++mutex_counter]--[unlock]
+```
+
+This is slower than atomic (idle threads instead of working ones), but a
+mutex can protect an entire block of code or several variables at once —
+something a single atomic can't do.
+
+#### Now, in the debugger
+
+Don't try to catch the threads by manually pausing the program — 4
+threads racing through 100,000 tight increments each finish in well
+under a millisecond, far faster than any human can react to. Let a
+**breakpoint** do the pausing instead; it's reliable on every run.
+
+1. Make sure the **Threads** view is visible (View > Views > Threads if
+   not).
+2. Set a breakpoint inside `increment_unsafe()` on the
+   `++unsafe_counter;` line.
+3. Debug (F5), choose `9`. Execution stops the moment *any* worker
+   thread reaches that line. Open the Threads view and look at its
+   **Function** / **File** / **Line** columns:
+   - You'll see **more rows than just your 4 workers**. CDB/LLDB also
+     lists internal OS/runtime threads — rows whose Function is
+     something like `NtWaitForSingleObject` or
+     `NtWaitForWorkViaWorkerFactory`, with no File/Line of their own.
+     Those aren't your code — ignore them.
+   - The rows that matter are the ones whose **Function** names
+     `increment_unsafe` and whose **Line** shows your breakpoint's line
+     number. Those are your worker threads. Right after the very first
+     stop you'll often see just **1** of these rows, since the other
+     workers haven't reached the breakpoint yet.
+4. Press **F5 (Continue)** a handful of times (5–10 presses is plenty).
+   Each press resumes *every* thread until any one of them hits the
+   breakpoint again, so you're sampling the race rather than
+   single-stepping it. Re-check the Threads view after each press:
+   - Watch the count of `increment_unsafe` rows grow as more workers
+     arrive at the breakpoint — you should eventually see up to
+     **4 at once**.
+   - Watch their **thread ids** — different presses land on different
+     threads, direct proof several threads are all racing to reach this
+     exact line, over and over, with no fixed order between them.
+   - You may also eventually see *fewer* rows than before, if a worker
+     finished its entire 100,000-iteration loop and exited between
+     presses — that's expected too, not a bug in the setup.
+5. Click one `increment_unsafe` row, then another (if you have more than
+   one). Watch the thread selector in the Debug toolbar and the
+   highlighted row both switch to match — that's your confirmation you
+   switched threads. **The Stack view will look identical between
+   them** — same function names, same line, same depth — and that's
+   expected, not a sign nothing happened: `increment_unsafe()` isn't
+   recursive, so every worker's call stack always has the same shape.
+   What actually differs per-thread is a *value*, not the stack shape:
+   open the **Locals** pane and check `i` (the loop counter) while each
+   thread is selected — each thread has its own independent copy,
+   frozen wherever that particular thread's loop happened to be when it
+   hit the breakpoint. This is the debugger making the "spawn" diagram
+   above literal: each `increment_unsafe` row really is one of those
+   simultaneously-running, independently-progressing arrows.
+6. Now **remove the breakpoint** (or disable it). This loop runs 400,000
+   total increments — you obviously can't press F5 that many times by
+   hand. With the breakpoint gone, press F5 once more to let the program
+   run to completion at full speed, and read its own printed output:
+   `unsafe_counter = ... (expected ...) -- mismatch shows the race`. The
+   two numbers essentially never match, because multiple threads read,
+   incremented, and wrote back `unsafe_counter` at the same time without
+   any synchronization, silently losing some of those updates — the
+   exact scenario walked through in the timing diagram above.
+7. Compare against `increment_safe()`, which uses a `std::mutex`. Set a
+   breakpoint on the `std::scoped_lock lock(counter_mutex);` line and
+   debug again: at any moment, only one thread is ever stopped there —
+   check the Threads view and you'll see the rest sitting in a
+   waiting/blocked state rather than also being paused at your
+   breakpoint, since they're stuck waiting for the mutex to be released.
+
+**What to notice:** `unsafe_counter`'s final value is *non-deterministic*
+— run the program a few times and the exact wrong number will vary, but
+it will essentially never equal the expected total. That's the signature
+of a data race. `safe_counter` (atomic) and `mutex_counter`
+(mutex-guarded) are always correct, every time.
 
 ---
 
@@ -842,13 +779,12 @@ order builds skills progressively:
 1. Scenario 1 (stepping fundamentals)
 2. Scenario 2 (inspecting/changing state)
 3. Scenario 3 (reading the call stack)
-4. Scenario 9 (conditional breakpoints — once stepping alone gets tedious)
-5. Scenario 4 (memory & undefined behavior)
-6. Scenario 5 (STL pretty-printers)
-7. Scenario 6 (exceptions)
+4. Scenario 4 (conditional breakpoints — once stepping alone gets tedious)
+5. Scenario 5 (memory & undefined behavior)
+6. Scenario 6 (STL pretty-printers)
+7. Scenario 7 (exceptions)
 8. Scenario 8 (templates)
-9. Scenario 7 (multithreading — most advanced view usage)
-10. Scenario 10 (Debug vs. Release — ties everything together)
+9. Scenario 9 (multithreading — most advanced view usage)
 
 ## 6. Project layout
 
@@ -862,13 +798,12 @@ order builds skills progressively:
     ├── 01_breakpoints_stepping.cpp
     ├── 02_variables_watches.cpp
     ├── 03_call_stack_recursion.cpp
-    ├── 04_pointers_memory.cpp
-    ├── 05_containers_stl.cpp
-    ├── 06_exceptions.cpp
-    ├── 07_multithreading.cpp
+    ├── 04_conditional_breakpoints.cpp
+    ├── 05_pointers_memory.cpp
+    ├── 06_containers_stl.cpp
+    ├── 07_exceptions.cpp
     ├── 08_templates_generic.cpp
-    ├── 09_conditional_breakpoints.cpp
-    └── 10_optimized_release_debugging.cpp
+    └── 09_multithreading.cpp
 ```
 
 Each `.cpp` file's top comment block repeats the key steps for that
@@ -886,9 +821,7 @@ documentation pages:
 - [Setting breakpoints](https://doc.qt.io/qtcreator/creator-breakpoints-view.html)
 - [Evaluating expressions](https://doc.qt.io/qtcreator/creator-expressions-view.html)
 - [Inspect basic Qt objects](https://doc.qt.io/qtcreator/creator-how-to-inspect-basic-qt-objects.html)
-- [Viewing and editing register state](https://doc.qt.io/qtcreator/creator-registers-view.html)
 - [Set data breakpoints](https://doc.qt.io/qtcreator/creator-how-to-set-data-breakpoints.html)
-- [Viewing disassembled code](https://doc.qt.io/qtcreator/creator-disassembler-view.html)
 - [CDB debugger preferences](https://doc.qt.io/qtcreator/creator-preferences-debugger-cdb.html)
 - [Run on the desktop](https://doc.qt.io/qtcreator/creator-run-settings-desktop-devices.html)
 - [Configure projects for building](https://doc.qt.io/qtcreator/creator-build-settings.html)

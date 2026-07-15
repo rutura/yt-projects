@@ -7,7 +7,7 @@
 #include "scenarios.h"
 
 // ---------------------------------------------------------------------------
-// Scenario 07 - Multithreading (Threads view, data races)
+// Scenario 09 - Multithreading (Threads view, data races)
 //
 // race_condition_demo() below starts kThreadCount (4) threads that all
 // call increment_unsafe() at once. They all read, add 1, and write back

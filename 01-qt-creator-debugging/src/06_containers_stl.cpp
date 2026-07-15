@@ -10,7 +10,7 @@
 #include "scenarios.h"
 
 // ---------------------------------------------------------------------------
-// Scenario 05 - STL containers & pretty-printers
+// Scenario 06 - STL containers & pretty-printers
 //
 // What to try in Qt Creator:
 //   * Set a breakpoint on the `std::optional<int> maybe_missing = 42;`

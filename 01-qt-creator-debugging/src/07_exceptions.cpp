@@ -4,7 +4,7 @@
 #include "scenarios.h"
 
 // ---------------------------------------------------------------------------
-// Scenario 06 - Exceptions & breaking on the throw site
+// Scenario 07 - Exceptions & breaking on the throw site
 //
 // Note: this scenario's setup step depends on which debugger backend your
 // kit uses. If your kit is MSVC (visible as "MSVC 2022" in your kit's
