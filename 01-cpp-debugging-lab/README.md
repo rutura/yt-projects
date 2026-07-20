@@ -1,8 +1,7 @@
 # C++23 Debugging Lab
 
 A single CMake project built to give you hands-on practice with every major
-feature of a modern C++ debugger, using plain, modern C++23 (no Qt libraries
-required). Each numbered scenario is a small, self-contained "chapter" that
+feature of a modern C++ debugger, using plain, modern C++23. Each numbered scenario is a small, self-contained "chapter" that
 puts you in front of one debugging concept: breakpoints, inspecting and
 changing variables, the call stack, conditional breakpoints, memory
 inspection, exceptions, templates and threads.
@@ -15,11 +14,11 @@ everywhere to figure out what your program is doing.
 The instructions below describe debugger *concepts* and their common
 keyboard shortcuts (F5/F9/F10/F11), which match the default keymap in most
 mainstream C++ IDEs (Qt Creator, Visual Studio, CLion, VS Code with the
-C/C++ extension). The underlying view names — Locals, Watch/Expressions,
-Call Stack, Breakpoints, Memory, Threads — are effectively universal across
+C/C++ extension). The underlying view names: Locals, Watch/Expressions,
+Call Stack, Breakpoints, Memory, Threads, are effectively universal across
 debugger front ends (GDB, LLDB, CDB); only their exact menu location and
 occasional shortcut differ between IDEs. If a shortcut doesn't match your
-setup, check your IDE's keyboard shortcuts reference — the *concept* behind
+setup, check your IDE's keyboard shortcuts reference, the *concept* behind
 each step still applies everywhere.
 
 ---
@@ -29,13 +28,9 @@ each step still applies everywhere.
 - Any IDE or editor with an integrated C++ debugger (Qt Creator, Visual
   Studio, CLion, VS Code, etc.), or a standalone debugger (GDB, LLDB, CDB)
   driven from the command line.
-- A C++23-capable compiler. This project uses `<print>`/`<format>`, which
-  needs a genuinely recent standard library, not just a compiler that
-  claims `-std=c++23`:
+- A C++23-capable compiler. This project uses `<print>`/`<format>` and other C++23 features.
   - MSVC 2022 17.5+.
   - GCC 14+ or Clang 17+ (Linux, macOS, or MinGW/LLVM-MinGW on Windows).
-    Older toolchains (e.g. GCC 13) predate `<print>`/`<format>` support and
-    will fail to compile.
 - A matching debugger backend:
   - MSVC toolchains typically use **CDB** (Windows Debugging Tools).
   - GCC/Clang toolchains use **GDB** or **LLDB**.
@@ -73,46 +68,36 @@ Type a number and press Enter to run that scenario. **Set your breakpoints
 in the relevant source file first** (before you start debugging), then
 start debugging and type the scenario's number at the prompt.
 
-> If the program appears to hang, or repeatedly prints "Please enter a
-> number." / "Input closed." without ever letting you type, that almost
-> always means the run configuration isn't launching in a real terminal.
-> Stop the program and fix that setting first.
-
 ---
 
 ## 3. Your first debugging session, explained slowly
 
-If you've genuinely never used an IDE debugger before, read this section
+If you've never used an IDE debugger before, read this section
 before jumping into Scenario 1 — it explains *why* each action matters, not
 just *how* to trigger it.
 
 **What a debugger actually does.** Normally your program just runs start to
 finish. A debugger lets you freeze it at an exact line of code, look at
 every variable's current value, and then move forward one step (or one
-line, or one function) at a time, watching values change as you go. This
-is dramatically faster than the alternative of sprinkling `std::println`
-calls everywhere and rebuilding after every guess.
+line, or one function) at a time, watching values change as you go. 
 
 **Breakpoints.** A breakpoint marks a line where you want execution to
 pause. In most IDEs you set one by clicking in the thin margin to the left
 of the line numbers, or by putting your text cursor on that line and
-pressing **F9**. A marker (usually a red dot) appears. This works whether
-or not you're currently debugging — you can set breakpoints ahead of time,
-before you ever start a debug session.
+pressing **F9**. A marker (usually a red dot) appears. 
 
 **Starting a debug session.** Press **F5** (or your IDE's "Start
 Debugging" action). The IDE builds the project if anything changed,
-launches it, and lets it run freely until it hits one of your breakpoints
-(or you interrupt it manually, or it crashes, or it finishes). When a
+launches it, and lets it run freely until it hits one of your breakpoints When a
 breakpoint is hit, everything pauses: the program is frozen mid-execution,
 and the IDE switches into its debugging layout, showing you a collection
 of panes with information about exactly where you are.
 
 **The panes you'll use constantly:**
-- **Locals** — every variable currently in scope, with its live value.
+- **Locals**: every variable currently in scope, with its live value.
   Struct and class members can usually be expanded by clicking a small
   arrow/triangle next to them.
-- **Call Stack** (sometimes just "Stack") — the chain of function calls
+- **Call Stack** (sometimes just "Stack"): the chain of function calls
   that got you to where you're currently stopped. The top entry is where
   you are right now; each entry below it is "who called this."
 
@@ -131,15 +116,6 @@ as toolbar buttons or keyboard shortcuts:
 | Step Into | F11 | If the current line is a function call, jump inside that function and pause at its very first line. |
 | Step Out | Shift+F11 | Run the rest of the function you're currently inside, then pause right after control returns to whoever called it. |
 | Stop | Shift+F5 | End the debug session and terminate the program. |
-
-There's also **Run to Line**, usually **Ctrl+F10**: right-click any line in
-the editor (while a debug session is active) and choose it, or place your
-cursor on the line and use the shortcut. This runs at full speed until
-execution reaches that specific line — a one-time breakpoint you don't have
-to set up or clean up afterward.
-
-That's most of what you need for Scenario 1. Everything after
-that scenario builds on these same five actions.
 
 ---
 
