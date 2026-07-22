@@ -260,23 +260,7 @@ uninteresting hit.
    returned. This is a **dangling pointer**: the debugger has no way of
    knowing the memory behind it is no longer valid, so it just shows you
    whatever is still sitting there.
-   - Many debugger front ends automatically dereference pointers in
-     Locals, so you may see a single row, `*leaked_ptr`, with the
-     dereferenced value (`77`) shown directly. If your IDE shows the raw
-     pointer instead, you'll see `leaked_ptr` with its hex address and
-     type `int *`, plus a way to expand it into a `*leaked_ptr` row with
-     the same value (`77`) underneath.
-   - Either way, the fact that `77` is still readable at all is the
-     trap: the stack memory for `local_value` hasn't been overwritten by
-     anything else yet, so the debugger can still read the old value out
-     of it — even though that memory is no longer valid for your program
-     to use. This is exactly why dangling-pointer bugs are dangerous:
-     they often *appear* to work by pure accident.
-   - (You may have already noticed your compiler warned about this at
-     build time — `C4172` on MSVC/CDB, `-Wreturn-local-addr` or
-     `-Wreturn-stack-address` on GCC/Clang. That's the same bug, caught
-     two different ways: once by the compiler while reading your source,
-     and once by the debugger while your program actually runs.)
+
 3. Set a breakpoint inside `buffer_overrun_demo()`, on the
    `std::println("buffer sum = {}", raw_sum);` line. Step to it, then find
    your IDE's memory inspection view for `buffer` (often reached via a
