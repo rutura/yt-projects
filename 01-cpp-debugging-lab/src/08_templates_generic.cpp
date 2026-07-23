@@ -91,7 +91,7 @@ void scenarios::run_templates_generic() {
     Box<std::string> box{.value = "hello templates"};
     std::println("{}", box.describe());
 
-    const int runtime_value = 7; // not a compile-time constant to the optimizer here
+    constexpr int runtime_value = 7;
     const int classification = classify(runtime_value);
     std::println("classify({}) = {}", runtime_value, classification);
 }
